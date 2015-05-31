@@ -106,12 +106,12 @@ void SSP_Init(void) {
 	NVIC_DisableIRQ(SSP_IRQn);
 	if(SSP_PORT == LPC_SSP0) {
 		LPC_SYSCON->SYSAHBCLKCTRL	|= (1 << 11);				// Enables clock for SSP0
-		LPC_SYSCON->SSP0CLKDIV		 = 0x10;					// Clocking divider (16 -> 3MHz @ Fcclk 48MHz)
+		LPC_SYSCON->SSP0CLKDIV		 = 0x5;					// Clocking divider (6 -> 8MHz @ Fcclk 48MHz)
 		LPC_SYSCON->PRESETCTRL		&= ~(1 << 0);				// SSP_RST_N assert
 		LPC_SYSCON->PRESETCTRL		|= (1 <<  0);				// SSP_RST_N de-assert
 	} else { // SSP1
 		LPC_SYSCON->SYSAHBCLKCTRL	|= (1 << 18);				// Enables clock for SSP1
-		LPC_SYSCON->SSP1CLKDIV		 = 0x10;					// Clocking divider (16 -> 3MHz @ Fcclk 48MHz)
+		LPC_SYSCON->SSP1CLKDIV		 = 0x5;					// Clocking divider (6 -> 8MHz @ Fcclk 48MHz)
 		LPC_SYSCON->PRESETCTRL		&= ~(1 <<  2);				// SSP_RST_N assert
 		LPC_SYSCON->PRESETCTRL		|= (1 <<  2);				// SSP_RST_N de-assert
 	}
