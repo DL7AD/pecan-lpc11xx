@@ -233,7 +233,7 @@
 
 */
 
-#define TARGET					TARGET_PECAN_PICO6
+#define TARGET					TARGET_PECAN_FEMTO2_1
 #define RADIO_POWER				10
 
 
@@ -247,15 +247,11 @@
 	#define ADC_REF				REF_VCC			// ADC reference VCC input
 	#define REF_MV				3300			// Reference voltage in mv
 
-	#define ADC_PIO_BATT		PIO1_2
-	#define ADC_AD_BATT			AD3
-
-	#define ADC_REF				REF_VCC			// ADC reference is 1.8V LDO
-	#define ADC_PIO_BATT		PIO1_2
+	#define ADC_PIO_BATT		R_PIO1_2
 	#define ADC_AD_BATT			AD3
 
 	#define UART_GPIO_RXD		LPC_GPIO3
-	#define UART_PIO_RXD		PIO4_5
+	#define UART_PIO_RXD		PIO3_5
 	#define UART_PIN_RXD		(1 << 5)
 
 	#define UART_GPIO_TXD		LPC_GPIO3
