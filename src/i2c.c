@@ -1,10 +1,9 @@
-#ifdef USE_I2C
-
 #include "global.h"
 #include "target.h"
-
 #include "i2c.h"
 #include "config.h"
+
+#ifdef USE_I2C
 
 /****** exportierte Objekte **************************************************/
 

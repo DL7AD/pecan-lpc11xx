@@ -1,9 +1,9 @@
-#ifdef BMP180_AVAIL
-
 #include "config.h"
 #include "bmp180.h"
 #include "i2c.h"
 #include "global.h"
+
+#ifdef BMP180_AVAIL
 
 #define BMP180_ADDRESS_READ		0xEF	// I2C address of BMP180 for read access
 #define BMP180_ADDRESS_WRITE	0xEE	// I2C address of BMP180 for write access

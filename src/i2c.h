@@ -1,10 +1,10 @@
 #ifndef __I2C__H__
 #define __I2C__H__
 
-#ifdef USE_I2C
-
 #include "types.h"
+#include "config.h"
 
+#ifdef USE_I2C
 
 #define I2C_ERROR_WAITING	10							// Alles OK, die Kommunikation ist im Gange
 #define I2C_ERROR_NONE		0							// Alles OK

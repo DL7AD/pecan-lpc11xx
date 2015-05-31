@@ -233,8 +233,8 @@
 
 */
 
-#define TARGET					TARGET_PECAN_FEMTO2_1
-#define RADIO_POWER				10
+#define TARGET					TARGET_PECAN_PICO6
+#define RADIO_POWER				127
 
 
 /* ---------------------------- Target definitions ---------------------------- */
