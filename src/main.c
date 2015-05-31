@@ -95,7 +95,7 @@ int main(void)
 			// Show modem ISR stats from the previous transmission
 			if(!gpsIsOn())
 			{
-				GPS_Init();		// Init MAX7
+				GPS_Init(); // Init MAX7/MAX8
 				newPositionStillUnknown = true;
 			}
 		}
