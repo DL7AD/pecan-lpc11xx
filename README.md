@@ -1,4 +1,3 @@
-# pecan-lpc11xx
 Pecan code for LPC11xx trackers
 ===============================
 
