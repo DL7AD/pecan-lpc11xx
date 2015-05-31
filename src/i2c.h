@@ -1,23 +1,7 @@
-/**************************************************************************//**
- * @file		i2c.h
- * @brief		I²C Kommunikation
- *
- * @authors		A. Quade
- *
- * @par
- * Projekt:		BAT60_ChargeController
- *
- * @copyright
- * navtec GmbH, Berlin, Germany, www.navtec.de			\n
- * Tel.: +49 (0)3375 / 2465078							\n
- * FAX : +49 (0)3375 / 2465079							\n
- *
- * @since		V1.00
- *****************************************************************************/
-/** @addtogroup I2C **********************************************************/
-/*@{*/
 #ifndef __I2C__H__
 #define __I2C__H__
+
+#ifdef USE_I2C
 
 #include "types.h"
 
@@ -40,5 +24,5 @@ void	I2C_Process(uint8_t DeviceID, uint8_t CmdCode, uint16_t CmdWord, uint16_t *
 void	On_I2C(void);
 void	I2C_DeInit(void);
 
-/*@}*/ /* end of group I2C */
-#endif /* __I2C__H__ */
+#endif
+#endif

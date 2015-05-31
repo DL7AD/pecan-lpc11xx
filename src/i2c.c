@@ -1,29 +1,5 @@
-/**************************************************************************//**
- * @file		i2c.c
- * @brief		I²C Kommunikation
- *
- * @authors		A. Quade
- *
- * @par
- * Projekt:		BAT60_ChargeController
- *
- * @copyright
- * navtec GmbH, Berlin, Germany, www.navtec.de			\n
- * Tel.: +49 (0)3375 / 2465078							\n
- * FAX : +49 (0)3375 / 2465079							\n
- *
- * @since		V1.00
- *
- * @page Peripherals
- * ---
- * I²C
- * ---------
- * SCL: P0.4											\n
- * SDA: P0.5											\n
- *
- *****************************************************************************/
-/** @addtogroup I2C **********************************************************/
-/*@{*/
+#ifdef USE_I2C
+
 #include "global.h"
 #include "target.h"
 
@@ -362,4 +338,4 @@ void I2C_DeInit(void) {
 
 }
 
-/*@}*/ /* end of group I2C */
+#endif

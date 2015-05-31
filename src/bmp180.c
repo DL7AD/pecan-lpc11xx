@@ -1,3 +1,5 @@
+#ifdef BMP180_AVAIL
+
 #include "config.h"
 #include "bmp180.h"
 #include "i2c.h"
@@ -119,3 +121,5 @@ int32_t getPressure(void)
 
 	return p;
 }
+
+#endif
