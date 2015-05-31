@@ -33,8 +33,8 @@
 static uint16_t telemetry_counter = 0;
 static uint16_t loss_of_gps_counter = 0;
 
-char gps_aprs_lat_old[]	= "5230.73N";
-char gps_aprs_lon_old[]	= "01319.57E";
+char gps_aprs_lat_old[]	= "0000.00N";
+char gps_aprs_lon_old[]	= "00000.00W";
 char gps_time_old[]		= "000000";
 
 // changed from const  

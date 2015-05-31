@@ -8,7 +8,6 @@
 #include "LPC11xx.h"
 #include "config.h"
 
-//SSP_Info_t SSPStruct;
 SSP_Info_t volatile SSPStruct;
 
 /**
