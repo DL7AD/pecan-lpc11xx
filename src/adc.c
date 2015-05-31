@@ -32,7 +32,9 @@ void ADC_Init(void) {
 }
 
 void ADC_DeInit(void) {
+	#if ADC_REF == REF_VCC1V8_LDO
 	LDO_GPIO_EN->DATA			|= LDO_PIN_EN;	// Power down LDO
+	#endif
 	LPC_SYSCON->PDRUNCFG        |= 1<<4;		// Power down ADC
 	LPC_SYSCON->SYSAHBCLKCTRL   &= ~(1<<13);	// Disable ADC clock
 }
@@ -46,9 +48,21 @@ uint32_t getBatteryMV(void)
 	#if ADC_REF == REF_VCC1V8_LDO
 	return 1777 * 1024 / getADC(ADC_AD_REF);	// Calculate reference voltage (VCC which is also battery voltage)
 	#elif ADC_REF == REF_VCC
-	return getADC(ADC_PIO_BATT) / REF_MV;		// Return battery voltage
+	return getADC(ADC_AD_BATT) / REF_MV;		// Return battery voltage
 	#endif
 }
+
+/**
+ * Returns battery voltage in a 8bit value
+ * 255 = 4080mV
+ * @return 8bit battery voltage
+ */
+uint32_t getBattery8bit(void)
+{
+	return getBatteryMV() >> 4;
+}
+
+#ifdef SOLAR_AVAIL
 
 /**
  * Measures solar voltage in millivolts
@@ -64,16 +78,6 @@ uint32_t getSolarMV(void)
 }
 
 /**
- * Returns battery voltage in a 8bit value
- * 255 = 4080mV
- * @return 8bit battery voltage
- */
-uint32_t getBattery8bit(void)
-{
-	return getBatteryMV() >> 4;
-}
-
-/**
  * Returns solar voltage in a 8bit value
  * 255 = 2040mV
  * @return 8bit solar voltage
@@ -82,6 +86,8 @@ uint32_t getSolar8bit(void)
 {
 	return getSolarMV() >> 3;
 }
+
+#endif
 
 /**
  * Measures voltage at specific ADx and returns 10bit value (2^10-1 equals LPC reference voltage)

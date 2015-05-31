@@ -131,7 +131,11 @@ void aprs_send()
 
 
 	// adc6 = Usolar; Write to T# pos 4
+	#ifdef SOLAR_AVAIL
 	value = getSolar8bit();          // read ADC
+	#else
+	value = 0;
+	#endif
 	ADC_DeInit();
 	nsprintf(temp, 4, "%03d", value);
 	ax25_send_string(temp);               // write 8 bit ADC value
@@ -234,9 +238,11 @@ void aprs_send()
 	ax25_send_string(temp);
 	ax25_send_string("Vb ");
 
+	#ifdef SOLAR_AVAIL
 	itoa(getSolarMV(), temp, 10);
 	ax25_send_string(temp);
 	ax25_send_string("Vs ");
+	#endif
 	ADC_DeInit();
 
 	if (bmp180pressure > 0) {

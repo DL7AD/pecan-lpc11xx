@@ -23,9 +23,12 @@
 void ADC_Init(void);
 void ADC_DeInit(void);
 uint32_t getBatteryMV(void);
-uint32_t getSolarMV(void);
 uint32_t getBattery8bit(void);
-uint32_t getSolar8bit(void);
 uint16_t getADC(uint8_t ad);
+
+#ifdef SOLAR_AVAIL
+uint32_t getSolar8bit(void);
+uint32_t getSolarMV(void);
+#endif
 
 #endif
