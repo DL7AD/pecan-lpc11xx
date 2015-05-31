@@ -200,8 +200,6 @@
 // This is the pin used by the MX146 radio to signal full RF
 //#define MX146_READY_PIN   2 // Not available at PecanPico
 
-#define VCXO_FREQ					27000000
-
 // Some radios are frequency agile. Therefore we can set the (default) frequency here:
 #define RADIO_FREQUENCY				144800000
 
@@ -234,7 +232,7 @@
 */
 
 #define TARGET					TARGET_PECAN_PICO6
-#define RADIO_POWER				10
+#define RADIO_POWER				127
 
 
 /* ---------------------------- Target definitions ---------------------------- */
@@ -281,6 +279,8 @@
 	#define RADIO_GPIO_GPIO0	LPC_GPIO1
 	#define RADIO_PIO_GPIO0		PIO1_7
 	#define RADIO_PIN_GPIO0		(1 << 7)
+
+	#define OSC_FREQ(mv)		27000000		// Oscillator frequency (stable due to stabilized VCC)
 
 #elif TARGET == TARGET_PECAN_PICO6
 
@@ -364,6 +364,9 @@
 	#define GPS_GPIO_EN			LPC_GPIO1
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
+
+	#define OSC_FREQ(mv)		(mv*3.409+26989627)	// The oscillator suffers a variable voltage feed (VCC), this must be adjusted by
+													// software. The macro returns the exact oscillator frequency specified by voltage.
 
 #else
 	#error No/incorrect target selected

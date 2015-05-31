@@ -4,6 +4,7 @@
 #include "global.h"
 #include "LPC11xx.h"
 #include "spi.h"
+#include "adc.h"
 
 #define RF_SHIFT_SET(Select)			{ \
 										if (Select) \
@@ -27,7 +28,13 @@
 
 
 static uint32_t outdiv = 4;
+uint32_t osc_freq;
 
+/**
+ * Initializes Si406x transceiver chip. Adjustes the frequency which is shifted by variable
+ * oscillator voltage.
+ * @param mv Oscillator voltage in mv
+ */
 bool Si406x_Init(void) {
 	// Initialize SPI
 	SSP_Init();
@@ -52,13 +59,16 @@ bool Si406x_Init(void) {
 	// Power up transmitter
 	RADIO_SDN_SET(false);								// Radio SDN low (power up transmitter)
 
-	delay(10);											// Delay 10ms
+	// Measure voltage for determine oscillator frequency
+	ADC_Init();
+	osc_freq = OSC_FREQ(getBatteryMV());
+	ADC_DeInit();
 
 	// Power up (transmits oscillator type)
-	uint8_t x3 = (VCXO_FREQ >> 24) & 0x0FF;			// TCXO_FREQ / 0x1000000;
-	uint8_t x2 = (VCXO_FREQ >> 16) & 0x0FF;			// (TCXO_FREQ - x3 * 0x1000000) / 0x10000;
-	uint8_t x1 = (VCXO_FREQ >>  8) & 0x0FF;			// (TCXO_FREQ - x3 * 0x1000000 - x2 * 0x10000) / 0x100;
-	uint8_t x0 = (VCXO_FREQ >>  0) & 0x0FF;			// (TCXO_FREQ - x3 * 0x1000000 - x2 * 0x10000 - x1 * 0x100);
+	uint8_t x3 = (osc_freq >> 24) & 0x0FF;			// osc_freq / 0x1000000;
+	uint8_t x2 = (osc_freq >> 16) & 0x0FF;			// (osc_freq - x3 * 0x1000000) / 0x10000;
+	uint8_t x1 = (osc_freq >>  8) & 0x0FF;			// (osc_freq - x3 * 0x1000000 - x2 * 0x10000) / 0x100;
+	uint8_t x0 = (osc_freq >>  0) & 0x0FF;			// (osc_freq - x3 * 0x1000000 - x2 * 0x10000 - x1 * 0x100);
 	uint8_t init_command[] = {0x02, 0x01, 0x01, x3, x2, x1, x0};
 	SendCmdReceiveAnswer(init_command, 7, NULL, 7);
 
@@ -153,7 +163,7 @@ void sendFrequencyToSi406x(uint32_t freq, uint32_t shift) {
 	SendCmdReceiveAnswerSetDelay(set_band_property_command, 5, NULL, 5, 100);
 
 	// Set the PLL parameters
-	uint32_t f_pfd = 2 * VCXO_FREQ / outdiv;
+	uint32_t f_pfd = 2 * osc_freq / outdiv;
 	uint32_t n = ((uint32_t)(freq / f_pfd)) - 1;
 	float ratio = (float)freq / (float)f_pfd;
 	float rest  = ratio - (float)n;
@@ -163,7 +173,7 @@ void sendFrequencyToSi406x(uint32_t freq, uint32_t shift) {
 	uint32_t m1 = (m - m2 * 0x10000) >> 8;
 	uint32_t m0 = (m - m2 * 0x10000 - (m1 << 8));
 
-	uint32_t channel_increment = 524288 * outdiv * shift / (2 * VCXO_FREQ);
+	uint32_t channel_increment = 524288 * outdiv * shift / (2 * osc_freq);
 	uint8_t c1 = channel_increment >> 8;
 	uint8_t c0 = channel_increment - (0x100 * c1);
 
@@ -189,7 +199,7 @@ void setModem(void) {
 
 
 void setDeviation(uint32_t deviation) {
-	float units_per_hz = ((float)(0x40000*outdiv)) / ((float)VCXO_FREQ);
+	float units_per_hz = ((float)(0x40000*outdiv)) / ((float)osc_freq);
 
 	// Set deviation for RTTY
 	uint32_t modem_freq_dev = (unsigned long)(units_per_hz * deviation / 2.0 );
