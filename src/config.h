@@ -234,7 +234,7 @@
 */
 
 #define TARGET					TARGET_PECAN_PICO6
-#define RADIO_POWER				127
+#define RADIO_POWER				10
 
 
 /* ---------------------------- Target definitions ---------------------------- */
@@ -250,13 +250,8 @@
 	#define ADC_PIO_BATT		R_PIO1_2
 	#define ADC_AD_BATT			AD3
 
-	#define UART_GPIO_RXD		LPC_GPIO3
 	#define UART_PIO_RXD		PIO3_5
-	#define UART_PIN_RXD		(1 << 5)
-
-	#define UART_GPIO_TXD		LPC_GPIO3
 	#define UART_PIO_TXD		PIO3_4
-	#define UART_PIN_TXD		(1 << 4)
 
 	#define GPS_GPIO_RESET		LPC_GPIO0
 	#define GPS_PIO_RESET		PIO0_7
@@ -280,13 +275,12 @@
 	#define VCXO_PIO_EN			PIO1_11
 	#define VCXO_PIN_EN			(1 << 11)
 
+	#define VCXO_PIO_CTRL		PIO1_6
+	#define VCXO_MR_CTRL		MR0
+
 	#define RADIO_GPIO_GPIO0	LPC_GPIO1
 	#define RADIO_PIO_GPIO0		PIO1_7
 	#define RADIO_PIN_GPIO0		(1 << 7)
-
-	#define VCXO_GPIO_CTRL		LPC_GPIO1
-	#define VCXO_PIO_CTRL		PIO1_6
-	#define VCXO_MR_CTRL		MR0
 
 #elif TARGET == TARGET_PECAN_PICO6
 
@@ -294,6 +288,7 @@
 	#define EXT_PIN_AVAIL						// External pins available
 	#define SOLAR_AVAIL							// Solar feed available
 	#define BMP180_AVAIL						// Pressure sensor BMP180 is available
+	#define I2C_PULLUPS_AVAIL					// Controlable I2C Pullups available
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
 
 	#define ADC_REF				REF_VCC1V8_LDO	// ADC reference is 1.8V LDO
@@ -306,22 +301,12 @@
 	#define LDO_PIO_EN			R_PIO1_2
 	#define LDO_PIN_EN			(1 << 2)
 
-	#define SOLAR_AVAIL							// Solar input available
-	#define ADC_PIO_VSOL		PIO1_2
-	#define ADC_PIN_VSOL		(1 << 2)
-
-	#define I2C_PULLUPS_AVAIL					// Controlable I2C Pullups available
 	#define I2C_GPIO_PULL_VCC	LPC_GPIO1
 	#define I2C_PIO_PULL_VCC	PIO1_9
 	#define I2C_PIN_PULL_VCC	(1 << 9)
 
-	#define UART_GPIO_RXD		LPC_GPIO1
 	#define UART_PIO_RXD		PIO1_6
-	#define UART_PIN_RXD		(1 << 6)
-
-	#define UART_GPIO_TXD		LPC_GPIO1
 	#define UART_PIO_TXD		PIO1_7
-	#define UART_PIN_TXD		(1 << 7)
 
 	#define GPS_GPIO_RESET		LPC_GPIO2
 	#define GPS_PIO_RESET		PIO2_0
@@ -345,6 +330,9 @@
 	#define VCXO_PIO_EN			PIO0_3
 	#define VCXO_PIN_EN			(1 << 3)
 
+	#define VCXO_PIO_CTRL		PIO0_11
+	#define VCXO_MR_CTRL		MR3
+
 	#define RADIO_GPIO_GPIO0	LPC_GPIO3
 	#define RADIO_PIO_GPIO0		PIO3_4
 	#define RADIO_PIN_GPIO0		(1 << 4)
@@ -352,10 +340,6 @@
 	#define RADIO_GPIO_GPIO1	LPC_GPIO3
 	#define RADIO_PIO_GPIO1		PIO3_5
 	#define RADIO_PIN_GPIO1		(1 << 5)
-
-	#define VCXO_GPIO_CTRL		LPC_GPIO0
-	#define VCXO_PIO_CTRL		PIO0_11
-	#define VCXO_MR_CTRL		MR3
 
 	#define EXT_GPIO_OUT1		GPIO1
 	#define EXT_PIO_OUT1		PIO1_4
@@ -373,13 +357,6 @@
 	#define EXT_PIO_OUT4		PIO1_5
 	#define EXT_PIN_OUT4		(1 << 5)
 
-	#define I2C_GPIO_SDA		GPIO0
-	#define I2C_PIO_SDA			PIO0_5
-	#define I2C_PIN_SDA			(1 << 5)
-	#define I2C_GPIO_SCL		GPIO0
-	#define I2C_PIO_SCL			PIO0_4
-	#define I2C_PIN_SCL			(1 << 4)
-
 	#define I2C_GPIO_PULL_VCC	LPC_GPIO1
 	#define I2C_PIO_PULL_VCC	PIO1_9
 	#define I2C_PIN_PULL_VCC	(1 << 9)
@@ -387,8 +364,6 @@
 	#define GPS_GPIO_EN			LPC_GPIO1
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
-
-	#define BMP_AVAIL
 
 #else
 	#error No/incorrect target selected
@@ -452,17 +427,8 @@
 //#endif
 
 
-
-/* ------------------------------ Pin definitions ------------------------------ */
+/* ----------------------------- Pin definitions ------------------------------ */
 /* ----------------------- Please don't touch anything ------------------------ */
-
-//#if ADC_REF == REF_VCC1V8_LDO
-//	#define ADC_PIO_VCC1V8		ADC_PIO_REF
-//	#define ADC_PIN_VCC1V8		ADC_PIN_REF
-//#elif ADC_REF == REF_VCC
-//	#define ADC_PIO_VCC			ADC_PIO_REF
-//	#define ADC_PIN_VCC			ADC_PIN_REF
-//#endif
 
 #ifdef BMP180_AVAIL
 	#define USE_I2C
