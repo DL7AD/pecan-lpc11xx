@@ -1,5 +1,5 @@
-Pecan code for LPC11xx trackers
-===============================
+Pecan Tracker code for NXP LPC11xx microcontrollers
+===================================================
 
 made for
   * Pecan Femto 2.1 (based on LPC1114FHN33/303)
