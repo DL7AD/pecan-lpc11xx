@@ -17,19 +17,6 @@
 #define TARGET_PECAN_FEMTO2_1	1
 #define TARGET_PECAN_PICO6		2
 
-#define REF_VCC					3
-#define REF_VCC1V8_LDO			4
-
-#define UART_RXD_PIO1_6			5
-#define UART_RXD_PIO3_4			6
-
-#define UART_TXD_PIO1_7			7
-#define UART_TXD_PIO3_5			8
-
-#define BUS_UART				9
-#define BUS_I2C					10
-#define BUS_SPI					11
-
 #define AD0						0
 #define AD1						1
 #define AD2						2
