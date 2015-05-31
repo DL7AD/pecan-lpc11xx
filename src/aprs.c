@@ -86,7 +86,7 @@ void aprs_send()
 	int8_t bmp180temp = 0;
 	int32_t bmp180pressure = 0;
 
-	#ifdef BMP_AVAIL
+	#ifdef BMP180_AVAIL
 	BMP180_Init();
 	bmp180temp = getTemperature() / 10;	// Read temperature in degree celcius
 	bmp180pressure = getPressure();		// Read pressure in pascal
