@@ -329,7 +329,6 @@ void GPS_Init() {
 void GPS_PowerOn(void) {
 	gps_resetBuffer();					// Reset GPS buffer
 	gps_hw_switch(true);				// Power up GPS
-	//gps_reset();						// Reset GPS
 	gps_sw_switch(true);				// Switch on GPS
 	gps_setNavigationMode();			// Set navigation mode
 
