@@ -289,6 +289,7 @@
 	#define SOLAR_AVAIL							// Solar feed available
 	#define BMP180_AVAIL						// Pressure sensor BMP180 is available
 	#define I2C_PULLUPS_AVAIL					// Controlable I2C Pullups available
+	#define VCXO_POWERED_BY_LDO					// VCXO powered by LDO (VCC1V8)
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
 
 	#define ADC_REF				REF_VCC1V8_LDO	// ADC reference is 1.8V LDO
@@ -365,7 +366,7 @@
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
 
-	#define OSC_FREQ(mv)		(mv*3.409+26989627)	// The oscillator suffers a variable voltage feed (VCC), this must be adjusted by
+	#define OSC_FREQ(mv)		26999130			// The oscillator suffers a variable voltage feed (VCC), this must be adjusted by
 													// software. The macro returns the exact oscillator frequency specified by voltage.
 
 #else

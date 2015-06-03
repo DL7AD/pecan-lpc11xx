@@ -80,9 +80,14 @@ uint16_t readUncompensatedPressure(void)
  */
 int32_t getTemperature(void)
 {
-	int32_t x1 = ((readUncompensatedTemperature() - calib.ac6) * calib.ac5) >> 15;
-	int32_t x2 = (calib.mc << 11) / (x1 + calib.md);
-	return (x1 + x2 + 8) >> 4;
+	uint8_t tries = 5;
+	int32_t temp;
+	do {
+		int32_t x1 = ((readUncompensatedTemperature() - calib.ac6) * calib.ac5) >> 15;
+		int32_t x2 = (calib.mc << 11) / (x1 + calib.md);
+		temp = (x1 + x2 + 8) >> 4;
+	} while(tries-- && temp > 1000); // Workaround/Filter: Temperature over 100C is unrealistic
+	return temp;
 }
 
 /**

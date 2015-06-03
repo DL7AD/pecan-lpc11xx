@@ -1,12 +1,13 @@
 #include "config.h"
 #include "adc.h"
 #include "global.h"
+#include "ldo.h"
 
 void ADC_Init(void) {
 	// Enable LDO for reference voltage (only needed if VCC voltage unknown)
 	#if ADC_REF == REF_VCC1V8_LDO
-	LPC_IOCON->LDO_PIO_EN = 0x30;
-	LDO_GPIO_EN->DATA &= ~(LDO_PIN_EN);
+	LDO_INIT();
+	LDO_EN(true);
 	#endif
 
 	LPC_SYSCON->PDRUNCFG		&= ~(1<<4);		// Power up ADC
@@ -33,7 +34,7 @@ void ADC_Init(void) {
 
 void ADC_DeInit(void) {
 	#if ADC_REF == REF_VCC1V8_LDO
-	LDO_GPIO_EN->DATA			|= LDO_PIN_EN;	// Power down LDO
+	LDO_EN(false);								// Power down LDO
 	#endif
 	LPC_SYSCON->PDRUNCFG        |= 1<<4;		// Power down ADC
 	LPC_SYSCON->SYSAHBCLKCTRL   &= ~(1<<13);	// Disable ADC clock
@@ -46,7 +47,8 @@ void ADC_DeInit(void) {
 uint32_t getBatteryMV(void)
 {
 	#if ADC_REF == REF_VCC1V8_LDO
-	return 1777 * 1024 / getADC(ADC_AD_REF);	// Calculate reference voltage (VCC which is also battery voltage)
+	uint32_t ref = getADC(ADC_AD_REF);
+	return 1777 * 1024 / ref;	// Calculate reference voltage (VCC which is also battery voltage)
 	#elif ADC_REF == REF_VCC
 	return getADC(ADC_AD_BATT) / REF_MV;		// Return battery voltage
 	#endif
@@ -98,5 +100,5 @@ uint16_t getADC(uint8_t ad)
 	LPC_ADC->CR  = (LPC_ADC->CR & 0xFFF0) | (1 << ad);	// Configure active adc port
 	LPC_ADC->CR |= (1 << 24);							// Start conversion
 	while((LPC_ADC->DR[ad] < 0x7FFFFFFF));				// Wait for done bit to be toggled
-	return ((LPC_ADC->DR[ad] & 0xFFC0) >> 6);	// Cut out 10bit value
+	return ((LPC_ADC->DR[ad] & 0xFFC0) >> 6);			// Cut out 10bit value
 }
