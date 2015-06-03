@@ -157,7 +157,7 @@ bool UART_Init(uint32_t baud) {
 }
 
 void UART_DeInit(void) {
-	// TODO
+	LPC_SYSCON->SYSAHBCLKCTRL &= ~(1 << 12);		// Disable clock for UART
 }
 
 /**

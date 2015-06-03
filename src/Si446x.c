@@ -231,9 +231,7 @@ void stopTx(void) {
 }
 
 void radioShutdown(void) {
-	//stopTx();
 	RADIO_SDN_SET(true);	// Power down chip
-	//delay(100);				// Delay 100ms
 	VCXO_EN_SET(false);		// Power down oscillator
 
 	SSP_DeInit();			// Power down SPI
