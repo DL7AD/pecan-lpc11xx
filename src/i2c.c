@@ -334,7 +334,7 @@ void	I2C_Process(uint8_t DeviceID, uint8_t CmdCode, uint16_t CmdWord, uint16_t *
 }
 
 void I2C_DeInit(void) {
-
+	// TODO
 }
 
 #endif
