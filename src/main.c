@@ -38,11 +38,12 @@ void power_save()
 {
 	if(!modem_busy()) {  // Don't sleep if we're txing.
 
-		if (newPositionStillUnknown == true) {
+		if (newPositionStillUnknown) {
 			gps_setMaxPerformance();
-		} else {
+		} else if(gpsIsOn()) {
 			//Tell the GPS to go into Power save mode.
 			GPS_PowerOff();
+			gpsSetTime2lock(wd_counter); // Set how many cycles (1cycle=8sec) it took to aquire GPS
 		}
 
 		// Sleep mode is replaced with simple delay in debug mode because it will stop the SWD interface otherwise
@@ -81,11 +82,9 @@ int main(void)
 		{
 			if (!newPositionStillUnknown || (wd_counter >= APRS_PERIOD_SECONDS / 8)) // We have our GPS position or 2 minutes have passed without lease (giving up)
 			{
-				gpsSetTime2lock(wd_counter - APRS_PERIOD_SECONDS / 8);
-
-				if (!newPositionStillUnknown)
+				if (newPositionStillUnknown)
 				{
-					GPS_PowerOff();
+					gpsSetTime2lock(wd_counter); // Set how many cycles (1cycle=8sec) it took to aquire GPS
 				}
 
 				aprs_send();
