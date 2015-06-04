@@ -366,7 +366,7 @@
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
 
-	#define OSC_FREQ(celcius)	26998700		// Oscillator frequency
+	#define OSC_FREQ(celcius)	27000000		// Oscillator frequency
 
 #else
 	#error No/incorrect target selected
