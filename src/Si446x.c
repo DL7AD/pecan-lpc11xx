@@ -59,10 +59,10 @@ bool Si406x_Init(void) {
 	// Power up transmitter
 	RADIO_SDN_SET(false);								// Radio SDN low (power up transmitter)
 
-	// Measure voltage for determine oscillator frequency
-	ADC_Init();
-	osc_freq = OSC_FREQ(getBatteryMV());
-	ADC_DeInit();
+	// Measure temperature for determine oscillator frequency
+	BMP180_Init();
+	osc_freq = OSC_FREQ(getTemperature() / 10);
+	BMP180_DeInit();
 
 	// Power up (transmits oscillator type)
 	uint8_t x3 = (osc_freq >> 24) & 0x0FF;			// osc_freq / 0x1000000;

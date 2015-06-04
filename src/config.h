@@ -280,7 +280,7 @@
 	#define RADIO_PIO_GPIO0		PIO1_7
 	#define RADIO_PIN_GPIO0		(1 << 7)
 
-	#define OSC_FREQ(mv)		27000000		// Oscillator frequency (stable due to stabilized VCC)
+	#define OSC_FREQ(celcius)	27000000		// Oscillator frequency
 
 #elif TARGET == TARGET_PECAN_PICO6
 
@@ -366,8 +366,7 @@
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
 
-	#define OSC_FREQ(mv)		26999130			// The oscillator suffers a variable voltage feed (VCC), this must be adjusted by
-													// software. The macro returns the exact oscillator frequency specified by voltage.
+	#define OSC_FREQ(celcius)	26998700		// Oscillator frequency
 
 #else
 	#error No/incorrect target selected
