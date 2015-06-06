@@ -25,7 +25,7 @@ void ADC_Init(void) {
 	LPC_IOCON->ADC_PIO_SOLAR	 = ADC_AD_SOLAR < AD5 ? 0x02 : 0x01;
 	#endif
 
-	LPC_ADC->CR = 0xFF00; // Configure ADC block to max. accuracy
+	LPC_ADC->CR = 0x0B01; // Configure ADC block to max. accuracy
 
 	#if ADC_REF == REF_VCC1V8_LDO
 	delay(10); // Wait for LDO to establish LDO output voltage
@@ -73,7 +73,9 @@ uint32_t getBattery8bit(void)
 uint32_t getSolarMV(void)
 {
 	#if ADC_REF == REF_VCC1V8_LDO
-	return getADC(ADC_AD_SOLAR) / getBatteryMV();
+	uint32_t adc = getADC(ADC_AD_SOLAR);
+	uint32_t batt = getBatteryMV();
+	return adc * batt / 465; // Calculation adjusted to voltage divider (GND---10k--+--22k---VCC)
 	#elif ADC_REF == REF_VCC
 	return getADC(ADC_AD_SOLAR) / REF_MV;
 	#endif
