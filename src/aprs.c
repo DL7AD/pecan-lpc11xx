@@ -236,12 +236,12 @@ void aprs_send()
 	ADC_Init();
 	itoa(getBatteryMV(), temp, 10);
 	ax25_send_string(temp);
-	ax25_send_string("Vb ");
+	ax25_send_string("mVb ");
 
 	#ifdef SOLAR_AVAIL
 	itoa(getSolarMV(), temp, 10);
 	ax25_send_string(temp);
-	ax25_send_string("Vs ");
+	ax25_send_string("mVs ");
 	#endif
 	ADC_DeInit();
 
