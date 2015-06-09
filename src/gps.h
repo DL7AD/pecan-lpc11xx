@@ -55,6 +55,7 @@ uint32_t gps_get_region_frequency();
 bool gps_check_satellite();
 void gps_resetBuffer(void);
 void gps_setNavigationMode(void);
+void gps_setNMEAstrings();
 
 void gps_hw_switch(bool pos);
 void gps_sw_switch(bool pos);
