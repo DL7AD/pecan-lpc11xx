@@ -44,7 +44,7 @@
 // - Home:       0
 // - IGate:      5
 //
-#define S_CALLSIGN				"DL7AD"
+#define S_CALLSIGN				"DL4MDW"
 #define S_CALLSIGN_ID			11
 
 // Destination callsign: APRS (with SSID=0) is usually okay.
@@ -280,7 +280,7 @@
 	#define RADIO_PIO_GPIO0		PIO1_7
 	#define RADIO_PIN_GPIO0		(1 << 7)
 
-	#define OSC_FREQ(celcius)	27000000		// Oscillator frequency
+	#define OSC_FREQ			27000000		// Oscillator frequency
 
 #elif TARGET == TARGET_PECAN_PICO6
 
@@ -342,19 +342,19 @@
 	#define RADIO_PIO_GPIO1		PIO3_5
 	#define RADIO_PIN_GPIO1		(1 << 5)
 
-	#define EXT_GPIO_OUT1		GPIO1
+	#define EXT_GPIO_OUT1		LPC_GPIO1
 	#define EXT_PIO_OUT1		PIO1_4
 	#define EXT_PIN_OUT1		(1 << 4)
 
-	#define EXT_GPIO_OUT2		GPIO1
+	#define EXT_GPIO_OUT2		LPC_GPIO1
 	#define EXT_PIO_OUT2		PIO1_11
 	#define EXT_PIN_OUT2		(1 << 11)
 
-	#define EXT_GPIO_OUT3		GPIO3
+	#define EXT_GPIO_OUT3		LPC_GPIO3
 	#define EXT_PIO_OUT3		PIO3_2
 	#define EXT_PIN_OUT3		(1 << 2)
 
-	#define EXT_GPIO_OUT4		GPIO1
+	#define EXT_GPIO_OUT4		LPC_GPIO1
 	#define EXT_PIO_OUT4		PIO1_5
 	#define EXT_PIN_OUT4		(1 << 5)
 
@@ -366,7 +366,7 @@
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
 
-	#define OSC_FREQ(celcius)	27000000		// Oscillator frequency
+	#define OSC_FREQ(celcius)	20000000		// Oscillator frequency
 
 #else
 	#error No/incorrect target selected
