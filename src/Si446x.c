@@ -5,6 +5,7 @@
 #include "LPC11xx.h"
 #include "spi.h"
 #include "adc.h"
+#include "bmp180.h"
 
 #define RF_SHIFT_SET(Select)			{ \
 										if (Select) \
@@ -60,9 +61,13 @@ bool Si406x_Init(void) {
 	RADIO_SDN_SET(false);								// Radio SDN low (power up transmitter)
 
 	// Measure temperature for determine oscillator frequency
+	#ifdef BMP180_AVAIL
 	BMP180_Init();
 	osc_freq = OSC_FREQ(getTemperature() / 10);
 	BMP180_DeInit();
+	#else
+	osc_freq = OSC_FREQ;
+	#endif
 
 	// Power up (transmits oscillator type)
 	uint8_t x3 = (osc_freq >> 24) & 0x0FF;			// osc_freq / 0x1000000;
