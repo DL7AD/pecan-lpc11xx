@@ -80,7 +80,7 @@ uint16_t readUncompensatedPressure(void)
  */
 int32_t getTemperature(void)
 {
-	uint8_t tries = 5;
+	uint8_t tries = 10;
 	int32_t temp;
 	do {
 		int32_t x1 = ((readUncompensatedTemperature() - calib.ac6) * calib.ac5) >> 15;
