@@ -292,6 +292,12 @@
 	#define VCXO_POWERED_BY_LDO					// VCXO powered by LDO (VCC1V8)
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
 
+	#define VOLTAGE_NOGPS		2700			// Don't switch on GPS below this voltage (Telemetry transmission only)
+	#define VOLTAGE_NOTRANSMIT	2500			// Don't transmit below this voltage
+	#define VOLTAGE_GPS_MAXDROP 100				// Max. Battery drop voltage until GPS is switched off while acquisition
+												// Example: VOLTAGE_NOGPS = 2700 & VOLTAGE_GPS_MAXDROP = 100 => GPS will be switched
+												// off at 2600mV, GPS will not be switched on if battery voltage already below 2700mV
+
 	#define ADC_REF				REF_VCC1V8_LDO	// ADC reference is 1.8V LDO
 	#define ADC_PIO_REF			R_PIO1_1
 	#define ADC_AD_REF			AD2
@@ -438,6 +444,20 @@
 #endif
 #if GPS_BUS == I2C
 	#define USE_I2C
+#endif
+
+
+// Assigning default values if not set
+#ifndef VOLTAGE_NOGPS
+#define VOLTAGE_NOGPS 0
+#endif
+
+#ifndef VOLTAGE_NOTRANSMIT
+#define VOLTAGE_NOTRANSMIT 0
+#endif
+
+#ifndef VOLTAGE_GPS_MAXDROP
+#define VOLTAGE_GPS_MAXDROP 100
 #endif
 
 

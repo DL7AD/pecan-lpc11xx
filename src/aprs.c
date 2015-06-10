@@ -76,27 +76,22 @@ uint32_t addtime(uint32_t original, uint32_t seconds2add)
 	return 10000 * hours + 100 * minutes + seconds;
 }  
 
-// Exported functions
-void aprs_send()
+/**
+ * Transmit APRS telemetry packet
+ */
+void transmit_telemetry(void)
 {
 	char temp[12];
-	uint32_t frequency;
-	float altitude = 0;
 	int16_t value;
 	int8_t bmp180temp = 0;
-	int32_t bmp180pressure = 0;
 
 	#ifdef BMP180_AVAIL
 	BMP180_Init();
 	bmp180temp = getTemperature() / 10;	// Read temperature in degree celcius
-	bmp180pressure = getPressure();		// Read pressure in pascal
 	BMP180_DeInit();
 	#endif
 
-	// Set radio power and frequency
-	frequency = gps_get_region_frequency();
-	modem_set_tx_freq(frequency);
-	modem_set_tx_power(RADIO_POWER);
+	configure_transmitter();
 
 	// Send a telemetry package
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
@@ -161,7 +156,7 @@ void aprs_send()
 			ax25_send_byte('0');
 		}
 	}
-  
+
 	// Next two bits are the signum of latitude/longitude
 	// East = 1, West = 0
 	// North = 1, South = 0
@@ -186,18 +181,32 @@ void aprs_send()
 	} else {
 		ax25_send_byte('0');
 	}
-  
+
 
 	ax25_send_byte('0');
- 
+
 	ax25_send_footer();
 	ax25_flush_frame();                 // Tell the modem to go
+}
 
+/**
+ * Transmit APRS position packet
+ */
+void transmit_position(void)
+{
+	char temp[12];
+	float altitude = 0;
+	int8_t bmp180temp = 0;
+	int32_t bmp180pressure = 0;
 
+	#ifdef BMP180_AVAIL
+	BMP180_Init();
+	bmp180temp = getTemperature() / 10;	// Read temperature in degree celcius
+	bmp180pressure = getPressure();		// Read pressure in pascal
+	BMP180_DeInit();
+	#endif
 
-	// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
-	delay(6000);
-
+	configure_transmitter();
 
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
 	ax25_send_byte('/');                // Report w/ timestamp, no APRS messaging. $ = NMEA raw data
@@ -279,4 +288,12 @@ void aprs_send()
 	strcpy(gps_aprs_lat_old, gps_aprs_lat);
 	strcpy(gps_aprs_lon_old, gps_aprs_lon);
 	strcpy(gps_time_old, gps_time);
+}
+
+void configure_transmitter(void)
+{
+	// Set radio power and frequency
+	uint32_t frequency = gps_get_region_frequency();
+	modem_set_tx_freq(frequency); // TODO
+	modem_set_tx_power(RADIO_POWER);
 }

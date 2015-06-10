@@ -367,6 +367,7 @@ void GPS_Init() {
 	UART_Init(GPS_BAUDRATE);				// Init UART
 
 	GPS_PowerOn();
+	gps_setMaxPerformance();
 }
 
 void GPS_PowerOn(void) {

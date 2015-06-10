@@ -28,36 +28,27 @@
 #include "i2c.h"
 #include "sleep.h"
 #include "debug.h"
+#include "adc.h"
 
 //unsigned long next_tx_millis;
-uint32_t wd_counter;
-uint32_t ms_counter;
-bool newPositionStillUnknown;
+uint32_t wd_counter = 0;
+uint32_t ms_counter = 0;
+bool newPositionStillUnknown = true;
 
+/**
+ * Enter power save mode for 8 seconds. Power save is disabled and replaced by
+ * delay function in debug mode to avoid stopping SWD interface.
+ */
 void power_save()
 {
-	if(!modem_busy()) {  // Don't sleep if we're txing.
-
-		if (newPositionStillUnknown) {
-			gps_setMaxPerformance();
-		} else if(gpsIsOn()) {
-			//Tell the GPS to go into Power save mode.
-			GPS_PowerOff();
-			gpsSetTime2lock(wd_counter); // Set how many cycles (1cycle=8sec) it took to aquire GPS
-		}
-
-		// Sleep mode is replaced with simple delay in debug mode because it will stop the SWD interface otherwise
-		// #undef DEBUG
-		#ifdef DEBUG
-		delay(8000);
-		#else
-		SetLowCurrentOnGPIO();
-		InitDeepSleep(8000);
-		EnterDeepSleep();
-		// Reinitializing is done by wakeup interrupt routine in sleep.c => On_Wakeup
-		#endif
-
-	}
+	#ifdef DEBUG
+	delay(8000);
+	#else
+	SetLowCurrentOnGPIO();
+	InitDeepSleep(8000);
+	EnterDeepSleep();
+	// Reinitializing is done by wakeup interrupt routine in sleep.c => On_Wakeup
+	#endif
 }
 
 
@@ -78,6 +69,18 @@ int main(void)
 
 	while(true)
 	{
+		// Measure battery voltage
+		ADC_Init();
+		uint32_t batt_voltage = getBatteryMV();
+		ADC_DeInit();
+
+		// Switch tracker to sleep when battery below specific voltage
+		if(batt_voltage < VOLTAGE_NOTRANSMIT) {
+			GPS_PowerOff();
+			power_save();
+			continue;
+		}
+
 		if (wd_counter >= APRS_PERIOD_SECONDS / 8)
 		{
 			if (!newPositionStillUnknown || (wd_counter >= APRS_PERIOD_SECONDS / 8)) // We have our GPS position or 2 minutes have passed without lease (giving up)
@@ -87,41 +90,56 @@ int main(void)
 					gpsSetTime2lock(wd_counter); // Set how many cycles (1cycle=8sec) it took to aquire GPS
 				}
 
-				aprs_send();
+				transmit_telemetry();		// Transmit APRS telemetry packet
+
+				// Transmit position packet only when battery voltage above specific value or when GPS position already known
+				if(batt_voltage >= VOLTAGE_NOGPS || !newPositionStillUnknown) {
+					delay(6000);			// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
+					transmit_position();	// Transmit APRS position packet
+				}
+
 				wd_counter = 0;
 			}
 
 			// Show modem ISR stats from the previous transmission
 			if(!gpsIsOn())
 			{
-				GPS_Init(); // Init MAX7/MAX8
+				if(batt_voltage >= VOLTAGE_NOGPS)
+					GPS_Init(); // Switch on GPS if battery above specific voltage
+
 				newPositionStillUnknown = true;
 			}
 		}
 
-		if (newPositionStillUnknown) // Check for the available position first, without touching the serial. Else the GPS will wake up.
-		{
-			uint8_t c;
-			while(UART_ReceiveChar(&c))
-			{
-				if (gps_decode(c))
-				{
-					// We have received and decoded our location
-					newPositionStillUnknown = false;
+		if(gpsIsOn()) { // Check position if position unknown and gps switched on (switch off when battery runs low)
+			if(newPositionStillUnknown) {
+				uint8_t c;
+				while(UART_ReceiveChar(&c)) {
+					if (gps_decode(c)) {
+						// We have received and decoded our location
+						newPositionStillUnknown = false;
+					}
 				}
-			}
 
-			if(ms_counter++ == 8000) {
+				if(batt_voltage < VOLTAGE_NOGPS-VOLTAGE_GPS_MAXDROP) //Battery voltage dropped below specific value while acquisitioning
+					GPS_PowerOff(); // Stop consuming power
+
+				if(ms_counter++ == 8000) {
+					wd_counter++;
+					ms_counter = 0;
+				}
+				delay(1);
+			} else {
+				gpsSetTime2lock(wd_counter); // Set how many cycles (1cycle=8sec) it took to aquire GPS
+				GPS_PowerOff();
+
 				wd_counter++;
 				ms_counter = 0;
+				power_save(); // Enter power save mode
 			}
-			delay(1);
-		}
-		else
-		{
-			power_save();
+		} else { // GPS switched off
 			wd_counter++;
-			ms_counter = 0;
+			power_save(); // Enter power save mode
 		}
 	}
 

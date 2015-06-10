@@ -20,6 +20,9 @@
 
 #include "gps.h"
 
-void aprs_send();
+void transmit_telemetry(void);
+void transmit_position(void);
 uint32_t addtime(uint32_t original, uint32_t seconds2add);
+void configure_transmitter(void);
+
 #endif
