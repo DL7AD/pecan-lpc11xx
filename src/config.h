@@ -232,7 +232,7 @@
 */
 
 #define TARGET					TARGET_PECAN_PICO6
-#define RADIO_POWER				127
+#define RADIO_POWER				30
 
 
 /* ---------------------------- Target definitions ---------------------------- */
@@ -372,7 +372,8 @@
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
 
-	#define OSC_FREQ(celcius)	19999200		// Oscillator frequency
+	//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency
+	#define OSC_FREQ(u)			20000000	// Oscillator frequency
 
 #else
 	#error No/incorrect target selected

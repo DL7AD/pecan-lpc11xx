@@ -61,13 +61,12 @@ bool Si406x_Init(void) {
 	RADIO_SDN_SET(false);								// Radio SDN low (power up transmitter)
 
 	// Measure temperature for determine oscillator frequency
-	#ifdef BMP180_AVAIL
-	BMP180_Init();
-	osc_freq = OSC_FREQ(getTemperature() / 10);
-	BMP180_DeInit();
-	#else
-	osc_freq = OSC_FREQ;
-	#endif
+	BMP180_Init(); // Dont remove this (this is a bugfix) TODO: Find the error why this is needed
+	BMP180_DeInit(); // Dont remove this (this is a bugfix) TODO: Find the error why this is needed
+	ADC_Init();
+	uint32_t u = getBatteryMV();
+	ADC_DeInit();
+	osc_freq = OSC_FREQ(u);
 
 	// Power up (transmits oscillator type)
 	uint8_t x3 = (osc_freq >> 24) & 0x0FF;			// osc_freq / 0x1000000;
