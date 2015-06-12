@@ -91,12 +91,8 @@ int main(void)
 				}
 
 				transmit_telemetry();		// Transmit APRS telemetry packet
-
-				// Transmit position packet only when battery voltage above specific value or when GPS position already known
-				if(batt_voltage >= VOLTAGE_NOGPS || !newPositionStillUnknown) {
-					delay(6000);			// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
-					transmit_position();	// Transmit APRS position packet
-				}
+				delay(6000);			// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
+				transmit_position();	// Transmit APRS position packet
 
 				wd_counter = 0;
 			}
