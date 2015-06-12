@@ -44,7 +44,7 @@
 // - Home:       0
 // - IGate:      5
 //
-#define S_CALLSIGN				"DL4MDW"
+#define S_CALLSIGN				"DK0TU"
 #define S_CALLSIGN_ID			11
 
 // Destination callsign: APRS (with SSID=0) is usually okay.
@@ -372,9 +372,8 @@
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
 
-	//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency
-	#define OSC_FREQ(u)			20000000	// Oscillator frequency
-
+	//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
+	#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
 #else
 	#error No/incorrect target selected
 #endif
