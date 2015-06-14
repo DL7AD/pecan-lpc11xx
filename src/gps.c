@@ -222,12 +222,7 @@ float gps_course = 0;
 float gps_speed = 0;
 float gps_altitude = -1000.0; //The dead sea at -420 m is theoretically the deepest usable spot on earth where you could use a GPS
                               //Here we define -1000 m as our invalid gps altitude
-//uint32_t doppler_frequency = 145825000UL;
-//bool satInView = false;
-//int16_t iss_lat;
-//int16_t iss_lon;
 int16_t time2lock;
-bool newPositionStillUnknown;
 
 bool isOn = false;
 
@@ -679,6 +674,8 @@ int32_t gps_get_date()
 
 void gpsSetTime2lock(int16_t periods)
 {
+	if(periods > 255)
+		periods = 255;
 	time2lock = periods;
 }
 

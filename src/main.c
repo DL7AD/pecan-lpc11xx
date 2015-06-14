@@ -52,6 +52,100 @@ void power_save()
 }
 
 
+//int main(void)
+//{
+//	TargetResetInit(); // Configures clock and SystemTick timer
+//
+//	// This delay is necessary to get access again after module fell into a deep sleep state in which the reset pin is disabled !!!
+//	// To get access again, its necessary to access the chip in active mode. If chip is almost everytime in sleep mode, it can be
+//	// only waked up by the reset pin which is (as mentioned before) disabled.
+//	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
+//
+//	newPositionStillUnknown = true;
+//
+//	// Manipulate wd_counter that way, that its transmitting immediately after being switched on
+//	wd_counter = APRS_PERIOD_SECONDS / 8;
+//	ms_counter = 0;
+//
+//	while(true)
+//	{
+//		// Measure battery voltage
+//		ADC_Init();
+//		uint32_t batt_voltage = getBatteryMV();
+//		ADC_DeInit();
+//
+//		// Switch tracker to sleep when battery below specific voltage
+//		if(batt_voltage < VOLTAGE_NOTRANSMIT) {
+//			GPS_PowerOff();
+//			power_save();
+//			continue;
+//		}
+//
+//		if (wd_counter >= APRS_PERIOD_SECONDS / 8)
+//		{
+//			if (!newPositionStillUnknown || (wd_counter >= APRS_PERIOD_SECONDS / 8)) // We have our GPS position or 2 minutes have passed without lease (giving up)
+//			{
+//				if (newPositionStillUnknown)
+//				{
+//					gpsSetTime2lock(wd_counter);	// Set how many cycles (1cycle=8sec) it took to aquire GPS
+//													// This this only called if GPS failed to get lock in one cycle
+//				}
+//
+//				transmit_telemetry();		// Transmit APRS telemetry packet
+//				delay(6000);			// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
+//				transmit_position();	// Transmit APRS position packet
+//
+//				wd_counter = 0;
+//			}
+//
+//			// Show modem ISR stats from the previous transmission
+//			if(!gpsIsOn())
+//			{
+//				if(batt_voltage >= VOLTAGE_NOGPS)
+//					GPS_Init(); // Switch on GPS if battery above specific voltage
+//
+//				newPositionStillUnknown = true;
+//			}
+//		}
+//
+//		if(gpsIsOn()) { // Check position if position unknown and gps switched on (switch off when battery runs low)
+//			if(newPositionStillUnknown) {
+//				uint8_t c;
+//				while(UART_ReceiveChar(&c)) {
+//					if (gps_decode(c)) {
+//						// We have received and decoded our location
+//						newPositionStillUnknown = false;
+//					}
+//				}
+//
+//				if(batt_voltage < VOLTAGE_NOGPS-VOLTAGE_GPS_MAXDROP) //Battery voltage dropped below specific value while acquisitioning
+//					GPS_PowerOff(); // Stop consuming power
+//
+//				if(ms_counter++ == 8000) {
+//					wd_counter++;
+//					ms_counter = 0;
+//				}
+//				delay(1);
+//			} else {
+//				gpsSetTime2lock(wd_counter); // Set how many cycles (1cycle=8sec) it took to aquire GPS
+//				GPS_PowerOff();
+//
+//				wd_counter++;
+//				ms_counter = 0;
+//				power_save(); // Enter power save mode
+//			}
+//		} else { // GPS switched off
+//			wd_counter++;
+//			power_save(); // Enter power save mode
+//		}
+//	}
+//
+//}
+
+
+
+
+
 int main(void)
 {
 	TargetResetInit(); // Configures clock and SystemTick timer
@@ -61,82 +155,118 @@ int main(void)
 	// only waked up by the reset pin which is (as mentioned before) disabled.
 	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
 
-	newPositionStillUnknown = true;
 
-	// Manipulate wd_counter that way, that its transmitting immediately after being switched on
-	wd_counter = APRS_PERIOD_SECONDS / 8;
-	ms_counter = 0;
+	trackingstate_t trackingstate = TRANSMIT;
+	gpsstate_t gpsstate = GPS_LOSS;
+	uint64_t oldsleep = 0;
 
-	while(true)
-	{
+	while(true) {
+
 		// Measure battery voltage
 		ADC_Init();
 		uint32_t batt_voltage = getBatteryMV();
 		ADC_DeInit();
 
-		// Switch tracker to sleep when battery below specific voltage
-		if(batt_voltage < VOLTAGE_NOTRANSMIT) {
+		// Freeze tracker when battery below specific voltage
+		if(batt_voltage < VOLTAGE_NOTRANSMIT)
+		{
 			GPS_PowerOff();
-			power_save();
-			continue;
+			trackingstate = SLEEP;
 		}
 
-		if (wd_counter >= APRS_PERIOD_SECONDS / 8)
+		// Switch states
+		switch(trackingstate)
 		{
-			if (!newPositionStillUnknown || (wd_counter >= APRS_PERIOD_SECONDS / 8)) // We have our GPS position or 2 minutes have passed without lease (giving up)
-			{
-				if (newPositionStillUnknown)
-				{
-					gpsSetTime2lock(wd_counter); // Set how many cycles (1cycle=8sec) it took to aquire GPS
+			case SLEEP:
+				if(oldsleep/(APRS_PERIOD_SECONDS*1000) == getUnixTimestamp()/(APRS_PERIOD_SECONDS*1000)) {
+					power_save();
+					continue;
+				}
+				oldsleep = getUnixTimestamp();
+				trackingstate = SEARCH_GPS;
+				break;
+
+			case SWITCH_ON_GPS:
+				if(batt_voltage < VOLTAGE_NOGPS) { // Tracker has low battery, so switch off GPS
+					if(gpsIsOn())
+						GPS_PowerOff();
+					continue;
 				}
 
-				transmit_telemetry();		// Transmit APRS telemetry packet
-				delay(6000);			// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
-				transmit_position();	// Transmit APRS position packet
+				// Switch on GPS if switched off
+				GPS_Init();
 
-				wd_counter = 0;
-			}
+				trackingstate = SEARCH_GPS;
 
-			// Show modem ISR stats from the previous transmission
-			if(!gpsIsOn())
-			{
-				if(batt_voltage >= VOLTAGE_NOGPS)
-					GPS_Init(); // Switch on GPS if battery above specific voltage
+			case SEARCH_GPS:
+				// Decide to switch off GPS due to low battery
+				if(batt_voltage < VOLTAGE_NOGPS-VOLTAGE_GPS_MAXDROP && gpsIsOn()) //Battery voltage dropped below specific value while acquisitioning
+					GPS_PowerOff(); // Stop consuming power
 
-				newPositionStillUnknown = true;
-			}
-		}
+				// Parse NMEA
+				if(gpsIsOn()) {
+					uint8_t c;
+					while(UART_ReceiveChar(&c)) {
+						if(gps_decode(c)) {
+							// Switch off GPS
+							GPS_PowerOff();
 
-		if(gpsIsOn()) { // Check position if position unknown and gps switched on (switch off when battery runs low)
-			if(newPositionStillUnknown) {
-				uint8_t c;
-				while(UART_ReceiveChar(&c)) {
-					if (gps_decode(c)) {
-						// We have received and decoded our location
-						newPositionStillUnknown = false;
+							// We have received and decoded our location
+							gpsSetTime2lock((getUnixTimestamp() - oldsleep) / 1000);
+							trackingstate = TRANSMIT;
+							gpsstate = GPS_LOCK;
+						}
 					}
 				}
 
-				if(batt_voltage < VOLTAGE_NOGPS-VOLTAGE_GPS_MAXDROP) //Battery voltage dropped below specific value while acquisitioning
-					GPS_PowerOff(); // Stop consuming power
-
-				if(ms_counter++ == 8000) {
-					wd_counter++;
-					ms_counter = 0;
+				if(oldsleep/(APRS_PERIOD_SECONDS*1000) != getUnixTimestamp()/(APRS_PERIOD_SECONDS*1000)) { // Searching for GPS took longer than one cycle
+					oldsleep = (oldsleep+APRS_PERIOD_SECONDS*1000);
+					gpsSetTime2lock(APRS_PERIOD_SECONDS);
+					trackingstate = TRANSMIT;
+					gpsstate = GPS_LOSS;
 				}
-				delay(1);
-			} else {
-				gpsSetTime2lock(wd_counter); // Set how many cycles (1cycle=8sec) it took to aquire GPS
-				GPS_PowerOff();
 
-				wd_counter++;
-				ms_counter = 0;
-				power_save(); // Enter power save mode
-			}
-		} else { // GPS switched off
-			wd_counter++;
-			power_save(); // Enter power save mode
+				break;
+
+			case TRANSMIT:
+				// Transmit APRS telemetry
+				transmit_telemetry();
+
+				// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
+				power_save(6000);
+
+				// Transmit APRS position
+				transmit_position();
+
+				// Change state depending on GPS status
+				if(gpsstate == GPS_LOCK) {
+					trackingstate = SLEEP;
+				} else {
+					trackingstate = SEARCH_GPS;
+				}
+
+				break;
+
+			default: // It should actually never reach this trackerstate
+				trackingstate = TRANSMIT;
 		}
 	}
-
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

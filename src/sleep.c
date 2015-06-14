@@ -48,7 +48,7 @@ void EnterDeepSleep(void)
     // Preload clock selection for quick switch back to IRC on wakeup
     LPC_SYSCON->MAINCLKSEL = MAINCLKSEL_SEL_IRCOSC;
 
-    setUnixTimestamp(getUnixTimestamp() + lastTimeSetup); // Correct unix timestamp for next wakeup
+    incrementUnixTimestamp(lastTimeSetup); // Correct unix timestamp for next wakeup
     LPC_TMR32B0->TCR = BF_TIMER_TCR_RUN; // start sleep timer
 
     __WFI();  // Enter deep sleep mode

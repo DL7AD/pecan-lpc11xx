@@ -23,4 +23,16 @@ typedef struct GPS {
 	bool		isValid;	// Gültigkeit
 } GPS_t;
 
+typedef enum {
+	SLEEP,					// General sleep mode
+	SWITCH_ON_GPS,			// Switch on GPS
+	SEARCH_GPS,				// Search for GPS
+	TRANSMIT				// Transmit state
+} trackingstate_t;
+
+typedef enum {
+	GPS_LOCK,
+	GPS_LOSS
+} gpsstate_t;
+
 #endif
