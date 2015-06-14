@@ -45,7 +45,7 @@
 // - IGate:      5
 //
 #define S_CALLSIGN				"DK0TU"
-#define S_CALLSIGN_ID			11
+#define S_CALLSIGN_ID			13
 
 // Destination callsign: APRS (with SSID=0) is usually okay.
 #define D_CALLSIGN				"APECAN"  // APExxx = Telemetry devices (that's what Pecan actually is)
@@ -62,17 +62,10 @@
 // (read more about digipeating paths here: http://wa8lmf.net/DigiPaths/ )
 // The recommended digi path for a balloon is WIDE2-1 or pathless. The default
 // is to use WIDE2-1. Comment out the following two lines for pathless:
-#define DIGI_PATH1				"WIDE1"
+#define DIGI_PATH1				"WIDE2-1"
 #define DIGI_PATH1_TTL			1
-#define DIGI_PATH2				"WIDE1"
-#define DIGI_PATH2_TTL			1
-
-// If we want to pass selected packets through the International Space Station
-#define DIGI_PATH1_SAT "ARISS"
-#define DIGI_PATH1_TTL_SAT		0
-// #define DIGI_PATH2_SAT		"SGATE"
-// #define DIGI_PATH2_TTL_SAT	0
-
+//#define DIGI_PATH2				"WIDE1"
+//#define DIGI_PATH2_TTL			1
 
 // APRS comment: this goes in the comment portion of the APRS message. You
 // might want to keep this short. The longer the packet, the more vulnerable
