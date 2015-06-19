@@ -29,6 +29,7 @@
 #include "sleep.h"
 #include "debug.h"
 #include "adc.h"
+#include "bmp180.h"
 
 //unsigned long next_tx_millis;
 uint32_t wd_counter = 0;
@@ -155,7 +156,6 @@ int main(void)
 	// only waked up by the reset pin which is (as mentioned before) disabled.
 	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
 
-
 	trackingstate_t trackingstate = TRANSMIT;
 	gpsstate_t gpsstate = GPS_LOSS;
 	uint64_t oldsleep = 0;
@@ -183,7 +183,7 @@ int main(void)
 					continue;
 				}
 				oldsleep = getUnixTimestamp();
-				trackingstate = SEARCH_GPS;
+				trackingstate = SWITCH_ON_GPS;
 				break;
 
 			case SWITCH_ON_GPS:
@@ -242,7 +242,7 @@ int main(void)
 				if(gpsstate == GPS_LOCK) {
 					trackingstate = SLEEP;
 				} else {
-					trackingstate = SEARCH_GPS;
+					trackingstate = SWITCH_ON_GPS;
 				}
 
 				break;
