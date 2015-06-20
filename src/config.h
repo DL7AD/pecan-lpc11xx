@@ -103,7 +103,8 @@
 
 // APRS_PERIOD is here replaced with APRS_PERIOD_SECONDS because we use the 
 // watchdog timer to save more power.
-#define APRS_PERIOD_SECONDS 120
+#define TIME_SLEEP_CYCLE	120000
+#define TIME_MAX_GPS_SEARCH	120000
 
 // Set any value here (in ms) if you want to delay the first transmission
 // after resetting the device.

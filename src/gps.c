@@ -222,7 +222,7 @@ float gps_course = 0;
 float gps_speed = 0;
 float gps_altitude = -1000.0; //The dead sea at -420 m is theoretically the deepest usable spot on earth where you could use a GPS
                               //Here we define -1000 m as our invalid gps altitude
-int16_t time2lock;
+uint8_t time2lock;
 
 bool isOn = false;
 
@@ -471,15 +471,16 @@ bool gps_decode(char c)
 						strcpy(rmc_date, new_date);
 						uint32_t date = atoi(rmc_date);
 						uint32_t time = atoi(rmc_time);
-						setUnixTimestamp(
-							(date % 100) + 2000,	// Year
-							(date % 10000) / 100,	// Month
-							date / 10000,			// Day
-							time / 10000,			// Hour
-							(time % 10000) / 100,	// Minute
-							time % 100,				// Second
-							0						// Millisecond
-						);
+						if(date != 0) // If date != 0 then gps has valid time
+							setUnixTimestamp(
+								(date % 100) + 2000,	// Year
+								(date % 10000) / 100,	// Month
+								date / 10000,			// Day
+								time / 10000,			// Hour
+								(time % 10000) / 100,	// Minute
+								time % 100,				// Second
+								0						// Millisecond
+							);
 						break;
 				}
 
@@ -683,11 +684,9 @@ int32_t gps_get_date()
 	return atol(gps_date);
 }
 
-void gpsSetTime2lock(int16_t periods)
+void gpsSetTime2lock(uint32_t ms)
 {
-	if(periods > 255)
-		periods = 255;
-	time2lock = periods;
+	time2lock = ms/1000 < 255 ? ms/1000 : 255;
 }
 
 void gps_reset(void) {

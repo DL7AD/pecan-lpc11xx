@@ -32,7 +32,8 @@ typedef enum {
 
 typedef enum {
 	GPS_LOCK,
-	GPS_LOSS
+	GPS_LOSS,
+	GPS_LOW_BATT
 } gpsstate_t;
 
 #endif

@@ -41,14 +41,14 @@ extern int32_t gps_get_date();
 extern int16_t iss_lat;
 extern int16_t iss_lon;
 extern uint16_t iss_datapoint;
-extern int16_t time2lock;
+extern uint8_t time2lock;
 extern bool newPositionStillUnknown;
 
 void GPS_Init();
 void gps_reset(void);
 void gps_setMaxPerformance();
 void gps_setPowerSaveMode();
-void gpsSetTime2lock(int16_t periods);
+void gpsSetTime2lock(uint32_t ms);
 
 bool gps_decode(char c);
 uint32_t gps_get_region_frequency();

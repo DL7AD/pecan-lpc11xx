@@ -97,7 +97,7 @@ void transmit_telemetry(void)
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
 	ax25_send_string("T#");                // Telemetry Report
 	telemetry_counter++;
-	if (telemetry_counter > 999) {
+	if (telemetry_counter > 255) {
 		telemetry_counter = 0;
 	}
 	nsprintf(temp, 4, "%03d", telemetry_counter);
@@ -192,7 +192,7 @@ void transmit_telemetry(void)
 /**
  * Transmit APRS position packet
  */
-void transmit_position(void)
+void transmit_position(gpsstate_t gpsstate)
 {
 	char temp[12];
 	float altitude = 0;
@@ -213,13 +213,13 @@ void transmit_position(void)
 
 	altitude = gps_get_altitude();
   
-	if(newPositionStillUnknown)
+	if(gpsstate != GPS_LOCK)
 	{
 		//use the old position
 		strcpy(gps_aprs_lat, gps_aprs_lat_old);
 		strcpy(gps_aprs_lon, gps_aprs_lon_old);
 
-		nsprintf(gps_time, 7, "%06d", addtime(atol(gps_time_old), APRS_PERIOD_SECONDS));
+		nsprintf(gps_time, 7, "%06d", addtime(atol(gps_time_old), (TIME_SLEEP_CYCLE+TIME_MAX_GPS_SEARCH)/1000)); // TODO: change this to unix timestamp library
 
 		//altitude = 0; // Is this necessary? SSE
 
@@ -270,7 +270,7 @@ void transmit_position(void)
 		ax25_send_string(APRS_COMMENT);     // Comment
 	}
 
-	if(newPositionStillUnknown) {
+	if(gpsstate != GPS_LOCK) {
 		loss_of_gps_counter++;
 		if(loss_of_gps_counter >= 15) { // make sure we don't get above 15
 			loss_of_gps_counter = 15; // will stay at 15 at permanent gps loss. 15 is maximum due to telemetry overflow

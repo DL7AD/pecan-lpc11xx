@@ -31,11 +31,6 @@
 #include "adc.h"
 #include "bmp180.h"
 
-//unsigned long next_tx_millis;
-uint32_t wd_counter = 0;
-uint32_t ms_counter = 0;
-bool newPositionStillUnknown = true;
-
 /**
  * Enter power save mode for 8 seconds. Power save is disabled and replaced by
  * delay function in debug mode to avoid stopping SWD interface.
@@ -52,101 +47,6 @@ void power_save()
 	#endif
 }
 
-
-//int main(void)
-//{
-//	TargetResetInit(); // Configures clock and SystemTick timer
-//
-//	// This delay is necessary to get access again after module fell into a deep sleep state in which the reset pin is disabled !!!
-//	// To get access again, its necessary to access the chip in active mode. If chip is almost everytime in sleep mode, it can be
-//	// only waked up by the reset pin which is (as mentioned before) disabled.
-//	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
-//
-//	newPositionStillUnknown = true;
-//
-//	// Manipulate wd_counter that way, that its transmitting immediately after being switched on
-//	wd_counter = APRS_PERIOD_SECONDS / 8;
-//	ms_counter = 0;
-//
-//	while(true)
-//	{
-//		// Measure battery voltage
-//		ADC_Init();
-//		uint32_t batt_voltage = getBatteryMV();
-//		ADC_DeInit();
-//
-//		// Switch tracker to sleep when battery below specific voltage
-//		if(batt_voltage < VOLTAGE_NOTRANSMIT) {
-//			GPS_PowerOff();
-//			power_save();
-//			continue;
-//		}
-//
-//		if (wd_counter >= APRS_PERIOD_SECONDS / 8)
-//		{
-//			if (!newPositionStillUnknown || (wd_counter >= APRS_PERIOD_SECONDS / 8)) // We have our GPS position or 2 minutes have passed without lease (giving up)
-//			{
-//				if (newPositionStillUnknown)
-//				{
-//					gpsSetTime2lock(wd_counter);	// Set how many cycles (1cycle=8sec) it took to aquire GPS
-//													// This this only called if GPS failed to get lock in one cycle
-//				}
-//
-//				transmit_telemetry();		// Transmit APRS telemetry packet
-//				delay(6000);			// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
-//				transmit_position();	// Transmit APRS position packet
-//
-//				wd_counter = 0;
-//			}
-//
-//			// Show modem ISR stats from the previous transmission
-//			if(!gpsIsOn())
-//			{
-//				if(batt_voltage >= VOLTAGE_NOGPS)
-//					GPS_Init(); // Switch on GPS if battery above specific voltage
-//
-//				newPositionStillUnknown = true;
-//			}
-//		}
-//
-//		if(gpsIsOn()) { // Check position if position unknown and gps switched on (switch off when battery runs low)
-//			if(newPositionStillUnknown) {
-//				uint8_t c;
-//				while(UART_ReceiveChar(&c)) {
-//					if (gps_decode(c)) {
-//						// We have received and decoded our location
-//						newPositionStillUnknown = false;
-//					}
-//				}
-//
-//				if(batt_voltage < VOLTAGE_NOGPS-VOLTAGE_GPS_MAXDROP) //Battery voltage dropped below specific value while acquisitioning
-//					GPS_PowerOff(); // Stop consuming power
-//
-//				if(ms_counter++ == 8000) {
-//					wd_counter++;
-//					ms_counter = 0;
-//				}
-//				delay(1);
-//			} else {
-//				gpsSetTime2lock(wd_counter); // Set how many cycles (1cycle=8sec) it took to aquire GPS
-//				GPS_PowerOff();
-//
-//				wd_counter++;
-//				ms_counter = 0;
-//				power_save(); // Enter power save mode
-//			}
-//		} else { // GPS switched off
-//			wd_counter++;
-//			power_save(); // Enter power save mode
-//		}
-//	}
-//
-//}
-
-
-
-
-
 int main(void)
 {
 	TargetResetInit(); // Configures clock and SystemTick timer
@@ -158,7 +58,7 @@ int main(void)
 
 	trackingstate_t trackingstate = TRANSMIT;
 	gpsstate_t gpsstate = GPS_LOSS;
-	uint64_t oldsleep = 0;
+	uint64_t timestampPointer = 0;
 
 	while(true) {
 
@@ -178,30 +78,36 @@ int main(void)
 		switch(trackingstate)
 		{
 			case SLEEP:
-				if(oldsleep/(APRS_PERIOD_SECONDS*1000) == getUnixTimestamp()/(APRS_PERIOD_SECONDS*1000)) {
-					power_save();
+				if(getUnixTimestamp()-timestampPointer >= TIME_SLEEP_CYCLE) {
+					trackingstate = SWITCH_ON_GPS;
 					continue;
 				}
-				oldsleep = getUnixTimestamp();
-				trackingstate = SWITCH_ON_GPS;
+				power_save();
 				break;
 
 			case SWITCH_ON_GPS:
 				if(batt_voltage < VOLTAGE_NOGPS) { // Tracker has low battery, so switch off GPS
 					if(gpsIsOn())
 						GPS_PowerOff();
+					trackingstate = TRANSMIT;
+					gpsstate = GPS_LOW_BATT;
 					continue;
 				}
 
 				// Switch on GPS if switched off
 				GPS_Init();
 
+				timestampPointer = getUnixTimestamp(); // Mark timestamp for search_gps routine
 				trackingstate = SEARCH_GPS;
+				break;
 
 			case SEARCH_GPS:
 				// Decide to switch off GPS due to low battery
-				if(batt_voltage < VOLTAGE_NOGPS-VOLTAGE_GPS_MAXDROP && gpsIsOn()) //Battery voltage dropped below specific value while acquisitioning
+				if(batt_voltage < VOLTAGE_NOGPS-VOLTAGE_GPS_MAXDROP) { //Battery voltage dropped below specific value while acquisitioning
 					GPS_PowerOff(); // Stop consuming power
+					trackingstate = TRANSMIT;
+					gpsstate = GPS_LOW_BATT;
+				}
 
 				// Parse NMEA
 				if(gpsIsOn()) {
@@ -212,18 +118,18 @@ int main(void)
 							GPS_PowerOff();
 
 							// We have received and decoded our location
-							gpsSetTime2lock((getUnixTimestamp() - oldsleep) / 1000);
+							gpsSetTime2lock(getUnixTimestamp() - timestampPointer);
 							trackingstate = TRANSMIT;
 							gpsstate = GPS_LOCK;
 						}
 					}
 				}
 
-				if(oldsleep/(APRS_PERIOD_SECONDS*1000) != getUnixTimestamp()/(APRS_PERIOD_SECONDS*1000)) { // Searching for GPS took longer than one cycle
-					oldsleep = (oldsleep+APRS_PERIOD_SECONDS*1000);
-					gpsSetTime2lock(APRS_PERIOD_SECONDS);
+				if(getUnixTimestamp()-timestampPointer >= TIME_MAX_GPS_SEARCH) { // Searching for GPS took too long
+					gpsSetTime2lock(TIME_MAX_GPS_SEARCH);
 					trackingstate = TRANSMIT;
 					gpsstate = GPS_LOSS;
+					continue;
 				}
 
 				break;
@@ -236,19 +142,21 @@ int main(void)
 				power_save(6000);
 
 				// Transmit APRS position
-				transmit_position();
+				transmit_position(gpsstate);
 
 				// Change state depending on GPS status
-				if(gpsstate == GPS_LOCK) {
+				if(gpsstate == GPS_LOCK || gpsstate == GPS_LOW_BATT) {
+					timestampPointer = getUnixTimestamp(); // Mark timestamp for sleep routine
 					trackingstate = SLEEP;
-				} else {
+				} else { // GPS_LOSS
 					trackingstate = SWITCH_ON_GPS;
 				}
 
 				break;
 
-			default: // It should actually never reach this trackerstate
+			default: // It should actually never reach this state
 				trackingstate = TRANSMIT;
+				break;
 		}
 	}
 }

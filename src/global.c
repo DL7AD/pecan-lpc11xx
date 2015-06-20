@@ -2,7 +2,7 @@
 #include "global.h"
 #include "types.h"
 
-uint64_t unixTimeStamp = 0; // UNIX timestamp in milliseconds
+int64_t unixTimeStamp = 0; // UNIX timestamp in milliseconds
 const uint16_t nonLeapYear[] = {0,31,59,89,120,151,181,212,243,273,304,334};
 const uint16_t leapYear[] = {0,31,58,88,119,150,180,211,242,272,303,333};
 
