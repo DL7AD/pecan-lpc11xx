@@ -71,6 +71,7 @@ int main(void)
 		if(batt_voltage < VOLTAGE_NOTRANSMIT)
 		{
 			GPS_PowerOff();
+			timestampPointer = getUnixTimestamp(); // Mark timestamp for sleep routine
 			trackingstate = SLEEP;
 		}
 
