@@ -44,18 +44,10 @@
 	0xB5, 0x62, 0x06, 0x24, 0x24, 0x00, 0xFF, 0xFF, 0x06, 0x03, \
 	0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 0x00, 0x00, 0x05, 0x00, \
 	0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C, 0x01, 0x00, 0x00, \
-	0x00, 0x00, 0x00, 0x00, 0x0A, 0x00, 0x03, 0x00, 0x00, 0x00, \
-	0x00, 0x00, 0x23, 0x3E \
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+	0x00, 0x00, 0x16, 0xDC \
 }
 
-#define UBX_SETGNSS { \
-	0xB5, 0x62, 0x06, 0x3E, 0x2C, 0x00, 0x00, 0x00, 0x20, 0x05, \
-	0x00, 0x08, 0x10, 0x00, 0x01, 0x00, 0x01, 0x01, 0x01, 0x01, \
-	0x03, 0x00, 0x01, 0x00, 0x01, 0x01, 0x03, 0x08, 0x10, 0x00, \
-	0x00, 0x00, 0x01, 0x01, 0x05, 0x00, 0x03, 0x00, 0x00, 0x00, \
-	0x01, 0x01, 0x06, 0x08, 0x0E, 0x00, 0x00, 0x00, 0x01, 0x01, \
-	0xFD, 0x2D \
-}
 #define UBX_SETGLLOFF { \
 	0xB5, 0x62, 0x06, 0x01, 0x08, 0x00, 0xF0, 0x01, 0x00, 0x00, \
 0x00, 0x00, 0x00, 0x01, 0x01, 0x2B \
@@ -109,10 +101,10 @@
 	0x1F, 0xAD \
 }
 
-// The ISS Kepplerian Elements calculated dataset (starting at Feb. 6th 00:00:00 UTC)
-const uint16_t ISSData[] = {
-	12565, 11545, 10525
-};
+//// The ISS Kepplerian Elements calculated dataset (starting at Feb. 6th 00:00:00 UTC)
+//const uint16_t ISSData[] = {
+//	12565, 11545, 10525
+//};
 
 #define ISSData_Length 2   // 2 days will stay below 32 Mbyte
 // Remember to get ISS data:
@@ -370,10 +362,9 @@ void GPS_PowerOn(void) {
 	gps_hw_switch(true);				// Power up GPS
 	gps_sw_switch(true);				// Switch on GPS
 
-	//gps_setNavigationMode();			// Set navigation mode
-	gps_setNavigationMode();
-	gps_setNMEAstrings();
-	gps_setMaxPerformance();
+	gps_setNavigationMode();			// Set navigation mode
+	gps_setNMEAstrings();				// Switch off unnecessary NMES strings
+	//gps_setMaxPerformance();
 
 	isOn = true;
 }
@@ -416,9 +407,6 @@ void gps_setNavigationMode()
 
 void gps_setNMEAstrings() {
 	uint8_t i;
-	uint8_t message[] = UBX_SETGNSS;
-	for(i=0; i<sizeof(message); i++)
-		UART_TransmitChar(message[i]);
 
 	uint8_t message2[] = UBX_SETGLLOFF;
 	for(i=0; i<sizeof(message2); i++)
@@ -588,7 +576,7 @@ bool gps_decode(char c)
 
 uint32_t gps_get_region_frequency()
 {
-	uint32_t frequency = RADIO_FREQUENCY;
+	uint32_t frequency = DEFAULT_FREQUENCY;
 	if(-168 < gps_lon && gps_lon < -34) frequency = RADIO_FREQUENCY_REGION2;
 	if(-34 <  gps_lon && gps_lon <  71) frequency = RADIO_FREQUENCY_REGION1;
 	if(-34.95f < gps_lat && gps_lat < 7.18f  && -73.13f < gps_lon && gps_lon < -26.46f) frequency = RADIO_FREQUENCY_BRAZIL;      // Brazil
@@ -608,56 +596,56 @@ uint32_t gps_get_region_frequency()
 	//if(29.7353 < gps_lat && gps_lat < 29.7359 && -95.5397 < gps_lon && gps_lon < -95.5392) frequency = MX146_FREQUENCY_TESTING; // Gessner BBQ
 
 	// Note: Never define a region that spans the date line! Use two regions instead.
-	if(gps_lat == 0 && gps_lon == 0) frequency = RADIO_FREQUENCY; // switch to default when we don't have a GPS lease
+	if(gps_lat == 0 && gps_lon == 0) frequency = DEFAULT_FREQUENCY; // switch to default when we don't have a GPS lease
 
 	return frequency;
 }
 
-bool gps_check_satellite()
-{
-	//int16_t latdiff; // unused
-	//int16_t londiff; // unused
-
-	int32_t igpsdate = atol(gps_date);
-	int32_t igpstime = atol(gps_time);
-
-	int16_t gpstime_day     =        igpsdate / 10000;
-	//int16_t gpstime_month   =        (igpsdate % 10000) / 100; // unused
-	//int16_t gpstime_year    =        (igpsdate % 10000) % 100 + 2000; // unused
-	int16_t gpstime_hour    =        igpstime / 10000;
-	int16_t gpstime_minute  =        (igpstime % 10000) / 100;
-	//int16_t gpstime_second  =        (igpstime % 10000) % 100; // unused
-
-	// The start time must match with the dataset above!
-	int32_t gpslaunchminutes = (gpstime_day - 19 ) * 1440 + (gpstime_hour - 0) * 60 + gpstime_minute - 0;
-
-	// look 2 minutes into the future so that you see the constellation for the next TX cycle
-	gpslaunchminutes += 2;
-
-	// make sure we're in the bounds of the array.
-	if ((gpslaunchminutes < 0) || (gpslaunchminutes > ISSData_Length)) // make sure we're in the bounds of the array.
-	{
-		gpslaunchminutes = 0;
-	}
-
-	iss_datapoint = ISSData[gpslaunchminutes];
-
-	// unmerge the datapoint into its components
-
-	iss_lat = ((iss_datapoint >> 9) - 64);
-	iss_lon = ((iss_datapoint & 511) - 180);
-
-	//latdiff = abs(iss_lat - (int16_t)gps_lat); // unused
-	//londiff = abs(iss_lon - (int16_t)gps_lon); // unused
-
-	// ISS nearby?
-	float delLat = abs(iss_lat-gps_lat)*111194.9;
-	float delLong = 111194.9*abs(iss_lon-gps_lon)*cos((iss_lat+gps_lat)*PI/360);
-	float distance = sqrt(pow(delLat,2)+pow(delLong,2))/1000.0; // Distance between balloon and ISS in km (on the surface of the earth)
-
-	satInView = distance < ISS_FOOTPRINT_RADIUS;
-	return satInView;
-}
+//bool gps_check_satellite()
+//{
+//	//int16_t latdiff; // unused
+//	//int16_t londiff; // unused
+//
+//	int32_t igpsdate = atol(gps_date);
+//	int32_t igpstime = atol(gps_time);
+//
+//	int16_t gpstime_day     =        igpsdate / 10000;
+//	//int16_t gpstime_month   =        (igpsdate % 10000) / 100; // unused
+//	//int16_t gpstime_year    =        (igpsdate % 10000) % 100 + 2000; // unused
+//	int16_t gpstime_hour    =        igpstime / 10000;
+//	int16_t gpstime_minute  =        (igpstime % 10000) / 100;
+//	//int16_t gpstime_second  =        (igpstime % 10000) % 100; // unused
+//
+//	// The start time must match with the dataset above!
+//	int32_t gpslaunchminutes = (gpstime_day - 19 ) * 1440 + (gpstime_hour - 0) * 60 + gpstime_minute - 0;
+//
+//	// look 2 minutes into the future so that you see the constellation for the next TX cycle
+//	gpslaunchminutes += 2;
+//
+//	// make sure we're in the bounds of the array.
+//	if ((gpslaunchminutes < 0) || (gpslaunchminutes > ISSData_Length)) // make sure we're in the bounds of the array.
+//	{
+//		gpslaunchminutes = 0;
+//	}
+//
+//	iss_datapoint = ISSData[gpslaunchminutes];
+//
+//	// unmerge the datapoint into its components
+//
+//	iss_lat = ((iss_datapoint >> 9) - 64);
+//	iss_lon = ((iss_datapoint & 511) - 180);
+//
+//	//latdiff = abs(iss_lat - (int16_t)gps_lat); // unused
+//	//londiff = abs(iss_lon - (int16_t)gps_lon); // unused
+//
+//	// ISS nearby?
+//	float delLat = abs(iss_lat-gps_lat)*111194.9;
+//	float delLong = 111194.9*abs(iss_lon-gps_lon)*cos((iss_lat+gps_lat)*PI/360);
+//	float distance = sqrt(pow(delLat,2)+pow(delLong,2))/1000.0; // Distance between balloon and ISS in km (on the surface of the earth)
+//
+//	satInView = distance < ISS_FOOTPRINT_RADIUS;
+//	return satInView;
+//}
 
 float gps_get_lat()
 {
