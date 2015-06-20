@@ -49,9 +49,7 @@
 
 // Destination callsign: APRS (with SSID=0) is usually okay.
 #define D_CALLSIGN				"APECAN"  // APExxx = Telemetry devices (that's what Pecan actually is)
-
 #define D_CALLSIGN_ID			0
-
 
 // APRS Symbol
 // Consists of Symbol table (/ or \ or a dew overlay symbols) and the symbol ID
@@ -72,161 +70,29 @@
 // it is to noise. 
 #define APRS_COMMENT    ""
 
-
-
-
-// Pressure in Pascal at sea level. 
-// Can be adjusted at launch date to get exact altitude from BMP180
-#define P0				101325.0
-
-
-// --------------------------------------------------------------------------
-// AX.25 config (ax25.cpp)
-// --------------------------------------------------------------------------
-
 // TX delay in milliseconds
-#define TX_DELAY		300   // default was 300
-
-// --------------------------------------------------------------------------
-// Tracker config (trackuino.cpp)
-// --------------------------------------------------------------------------
-
-// APRS_PERIOD is the period between transmissions. Since we're not listening
-// before transmitting, it may be wise to choose a "random" value here JUST
-// in case someone else is transmitting at fixed intervals like us. 61000 ms
-// is the default (1 minute and 1 second).
-//
-// Low-power transmissions on occasional events (such as a balloon launch)
-// might be okay at lower-than-standard APRS periods (< 10m). Check with/ask
-// permision to local digipeaters beforehand.
-// #define APRS_PERIOD   25000UL
-
-// APRS_PERIOD is here replaced with APRS_PERIOD_SECONDS because we use the 
-// watchdog timer to save more power.
-#define TIME_SLEEP_CYCLE	120000
-#define TIME_MAX_GPS_SEARCH	120000
-
-// Set any value here (in ms) if you want to delay the first transmission
-// after resetting the device.
-#define APRS_DELAY    0UL
-
-// GPS baud rate (in bits per second)
-#define GPS_BAUDRATE  9600   //4800 for Argentdata High Altitude GPS, 9600 for Venus or uBlox MAX-6Q
-
-// Radio: I've tested trackuino with two different radios:
-// Radiometrix HX1 and SRB MX146. The interface with these devices
-// is implemented in their respective radio_*.cpp files, and here
-// you can choose which one will be hooked up to the tracker.
-// The tracker will behave differently depending on the radio used:
-//
-// RadioHx1 (Radiometrix HX1):
-// - Time from PTT-on to transmit: 5ms (per datasheet)
-// - PTT is TTL-level driven (on=high) and audio input is 5v pkpk
-//   filtered and internally DC-coupled by the HX1, so both PTT
-//   and audio can be wired directly. Very few external components
-//   are needed for this radio, indeed.
-//
-// RadioMx146 (SRB MX146):
-// - Time from PTT-on to transmit: signaled by MX146 (pin RDY)
-// - Uses I2C to set freq (144.8 MHz) on start
-// - I2C requires wiring analog pins 4/5 (SDA/SCL) via two level
-//   converters (one for each, SDA and SCL). DO NOT WIRE A 5V ARDUINO
-//   DIRECTLY TO THE 3.3V MX146, YOU WILL DESTROY IT!!!
-//
-//   I2C 5-3.3v LEVEL TRANSLATOR:
-//
-//    +3.3v o--------+-----+      +---------o +5v
-//                   /     |      /
-//                R  \     |      \ R
-//                   /    G|      /
-//              3K3  \   _ L _    \ 4K7
-//                   |   T T T    |
-//   3.3v device o---+--+|_| |+---+---o 5v device
-//                     S|     |D
-//                      +-|>|-+
-//                             N-channel MOSFET
-//                           (BS170, for instance)
-//
-//   (Explanation of the lever translator:
-//   http://www.neoteo.com/adaptador-de-niveles-para-bus-i2c-3-3v-5v.neo)
-//
-// - Audio needs a low-pass filter (R=8k2 C=0.1u) plus DC coupling
-//   (Cc=10u). This also lowers audio to 500mV peak-peak required by
-//   the MX146.
-//
-//                   8k2        10uF
-//   Arduino out o--/\/\/\---+---||---o
-//                     R     |     Cc
-//                          ===
-//                     0.1uF | C
-//                           v
-//
-// - PTT is pulled internally to 3.3v (off) or shorted (on). Use
-//   an open-collector BJT to drive it:
-//        
-//                             o MX146 PTT
-//                             |
-//                    4k7    b |c
-//   Arduino PTT o--/\/\/\----K  (Any NPN will do)
-//                     R       |e
-//                             |
-//                             v GND
-// 
-// - Beware of keying the MX146 for too long, you will BURN it.
-//
-// So, summing up. Options are:
-//
-// - RadioMx146
-// - RadioHx1
-// - RadioAdf7012
-// - RadioSi446x
-//#define RADIO_CLASS   RadioSi446x
-
-// --------------------------------------------------------------------------
-// Radio config (radio_*.cpp)
-// --------------------------------------------------------------------------
-
-// This is the PTT pin to enable the transmitter and the VCXO; HIGH = on                
-
-// The ADL5531 PA is switched on separately with the TPS77650 Enable pin; LOW = on
-//#define TX_PA_PIN         6 // Not available at PecanPico
-
-// This is the pin used by the MX146 radio to signal full RF
-//#define MX146_READY_PIN   2 // Not available at PecanPico
-
-// Some radios are frequency agile. Therefore we can set the (default) frequency here:
-#define RADIO_FREQUENCY				144800000
-
-// In other regions the APRS frequencies are different. Our balloon may travel
-// from one region to another, so we may QSY according to GPS defined geographical regions
-// Here we set some regional frequencies:
-
-#define RADIO_FREQUENCY_REGION1		144800000 // Europe & Africa
-#define RADIO_FREQUENCY_REGION2		144390000 // North and south America (Brazil is different)
-
-#define RADIO_FREQUENCY_JAPAN        144660000
-#define RADIO_FREQUENCY_CHINA        144640000
-#define RADIO_FREQUENCY_BRAZIL       145570000
-#define RADIO_FREQUENCY_AUSTRALIA    145175000
-#define RADIO_FREQUENCY_NEWZEALAND   144575000
-#define RADIO_FREQUENCY_THAILAND     145525000
+#define TX_DELAY					300
 
 
-/*
-    144.390 MHz - Chile, Indonesia, North America
-    144.575 MHz - New Zealand 
-    144.660 MHz - Japan
-    144.640 MHz - China
-    144.800 MHz - South Africa, Europe, Russia
-    144.930 MHz - Argentina, Uruguay (no confirmation found. Hope this is not a typo?)
-    145.175 MHz - Australia
-    145.570 MHz - Brazil
-    145.525 MHz - Thailand
+#define TIME_SLEEP_CYCLE			120000
+#define TIME_MAX_GPS_SEARCH			120000
 
-*/
+#define TARGET						TARGET_PECAN_PICO6
 
-#define TARGET					TARGET_PECAN_PICO6
-#define RADIO_POWER				30
+// Battery type
+// PRIMARY		LiFeSe2 Power save modes disabled, battery will be used until completely empty
+// SECONDARY	LiFePO4 GPS will be kept off below 2700mV, no transmission is made below 2500mV to keep the accumulator healthy
+#define BATTERY_TYPE				SECONDARY
+
+// Frequency (which is used after reset state)
+#define DEFAULT_FREQUENCY			144800000
+
+// Radio power
+// min. 1, max. 127
+// Radio output power depends on VCC voltage
+// 127 @ VCC=3400mV ~ 100mW
+// 20  @ VCC=3400mV ~ 10mW
+#define RADIO_POWER					30
 
 
 /* ---------------------------- Target definitions ---------------------------- */
@@ -236,6 +102,7 @@
 
 	#define USE_GPS_SW_SW						// GPS software switch activated
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
+	#define GPS_BAUDRATE		9600			// Baudrate for ublox MAX7 or MAX8
 	#define ADC_REF				REF_VCC			// ADC reference VCC input
 	#define REF_MV				3300			// Reference voltage in mv
 
@@ -276,6 +143,10 @@
 
 	#define OSC_FREQ			27000000		// Oscillator frequency
 
+	#if BATTERY_TYPE == SECONDARY
+	#error Pecan Femto v2.1 can be only used whith primary batteries
+	#endif
+
 #elif TARGET == TARGET_PECAN_PICO6
 
 	#define USE_GPS_HW_SW						// GPS transistor switch available
@@ -285,12 +156,7 @@
 	#define I2C_PULLUPS_AVAIL					// Controlable I2C Pullups available
 	#define VCXO_POWERED_BY_LDO					// VCXO powered by LDO (VCC1V8)
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
-
-	#define VOLTAGE_NOGPS		2700			// Don't switch on GPS below this voltage (Telemetry transmission only)
-	#define VOLTAGE_NOTRANSMIT	2500			// Don't transmit below this voltage
-	#define VOLTAGE_GPS_MAXDROP 100				// Max. Battery drop voltage until GPS is switched off while acquisition
-												// Example: VOLTAGE_NOGPS = 2700 & VOLTAGE_GPS_MAXDROP = 100 => GPS will be switched
-												// off at 2600mV, GPS will not be switched on if battery voltage already below 2700mV
+	#define GPS_BAUDRATE		9600			// Baudrate for ublox MAX7 or MAX8
 
 	#define ADC_REF				REF_VCC1V8_LDO	// ADC reference is 1.8V LDO
 	#define ADC_PIO_REF			R_PIO1_1
@@ -366,10 +232,23 @@
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
 
+	// Thomas DL4MDW and me DL7AD are using two different oscillators
 	#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
 	//#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
 #else
 	#error No/incorrect target selected
+#endif
+
+#if BATTERY_TYPE == SECONDARY
+	#define VOLTAGE_NOGPS		2700			// Don't switch on GPS below this voltage (Telemetry transmission only)
+	#define VOLTAGE_NOTRANSMIT	2500			// Don't transmit below this voltage
+	#define VOLTAGE_GPS_MAXDROP 100				// Max. Battery drop voltage until GPS is switched off while acquisition
+												// Example: VOLTAGE_NOGPS = 2700 & VOLTAGE_GPS_MAXDROP = 100 => GPS will be switched
+												// off at 2600mV, GPS will not be switched on if battery voltage already below 2700mV
+#elif BATTERY_TYPE == PRIMARY
+	#define VOLTAGE_NOGPS		0				// All battery saving options are switched off, so battery will be used until completely empty
+	#define VOLTAGE_NOTRANSMIT	0
+	#define VOLTAGE_GPS_MAXDROP 0
 #endif
 
 
@@ -380,57 +259,8 @@
 
 // TODO: Rewrite configuration validation again and check which checks are missing
 
-//#if !defined(ADC_PIN_REF) || !defined(ADC_PIO_REF)
-//#error No ADC Reference Pin defined
-//#endif
-//
-//#if !defined(ADC_REF)
-//#error No ADC reference type defined
-//#endif
-//
-//#if ADC_REF == REF_VCC1V8_LDO && (!defined(LDO_GPIO_EN) || !defined(LDO_PIO_EN) || !defined(LDO_PIN_EN))
-//#error No LDO enable pin defined
-//#endif
-//
-//#if defined(SOLAR_AVAIL) && (!defined(ADC_PIO_VSOL) || !defined(ADC_PIN_VSOL))
-//#error No Solar ADC pin defined
-//#endif
-//
-//#if GPS_BUS == BUS_UART && UART_TXD != UART_TXD_PIO1_7 && UART_TXD != UART_TXD_PIO3_5
-//#error No UART TXD pin or incorrect pin defined
-//#endif
-//
-//#if GPS_BUS == BUS_UART && UART_RXD != UART_RXD_PIO1_6 && UART_RXD != UART_RXD_PIO3_4
-//#error No UART RXD pin or incorrect pin defined
-//#endif
 
-
-//#if !defined(SSP_GPIO_RADIO_SS) || !defined(SSP_PIO_RADIO_SS) || !defined(SSP_PIN_RADIO_SS)
-//#error No SSP Slave Select pin defined
-//#endif
-//
-//#if !defined(RADIO_GPIO_SDN) || !defined(RADIO_PIO_SDN) || !defined(RADIO_PIN_SDN)
-//#error No Radio shutdown pin defined
-//#endif
-//
-//#if !defined(VCXO_GPIO_EN) || !defined(VCXO_PIO_EN) || !defined(VCXO_PIN_EN)
-//#error No VCXO enable pin defined
-//#endif
-//
-//#if !defined(VCXO_GPIO_CTRL) || !defined(VCXO_PIO_CTRL)
-//#error No VCXO PWM pin defined
-//#endif
-//
-//#if !defined(VCXO_MR_CTRL)
-//#error No VCXO PWM Match Register defined
-//#endif
-//
-//#if !defined(GPS_GPIO_RESET) || !defined(GPS_PIO_RESET) || !defined(GPS_PIN_RESET)
-//#error No GPS reset pin defined
-//#endif
-
-
-/* ----------------------------- Pin definitions ------------------------------ */
+/* ---------------------------- Misc definitions ------------------------------ */
 /* ----------------------- Please don't touch anything ------------------------ */
 
 #ifdef BMP180_AVAIL
@@ -455,5 +285,21 @@
 #endif
 
 
+/* ---------- Constant definitions (which will never change in life) ---------- */
+/* ----------------------- Please don't touch anything ------------------------ */
+
+// In other regions the APRS frequencies are different. Our balloon may travel
+// from one region to another, so we may QSY according to GPS defined geographical regions
+// Here we set some regional frequencies:
+
+#define RADIO_FREQUENCY_REGION1		144800000 // Europe & Africa
+#define RADIO_FREQUENCY_REGION2		144390000 // North and south America (Brazil is different)
+
+#define RADIO_FREQUENCY_JAPAN		144660000
+#define RADIO_FREQUENCY_CHINA		144640000
+#define RADIO_FREQUENCY_BRAZIL		145570000
+#define RADIO_FREQUENCY_AUSTRALIA	145175000
+#define RADIO_FREQUENCY_NEWZEALAND	144575000
+#define RADIO_FREQUENCY_THAILAND	145525000
 
 #endif
