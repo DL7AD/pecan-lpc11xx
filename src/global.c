@@ -25,8 +25,8 @@ void SysTick_Handler(void) {
  * @param second Current Second
  * @param millisecond Current Millisecond
  */
-void setUnixTimestamp(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint16_t millisecond) {
-	uint8_t time;
+void setUnixTimestamp(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint16_t millisecond) {
+	uint64_t time;
 	time  = second;
 	time += minute * 60;
 	time += hour * 3600;

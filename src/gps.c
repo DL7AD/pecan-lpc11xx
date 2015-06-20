@@ -469,6 +469,17 @@ bool gps_decode(char c)
 					case SENTENCE_RMC:
 						strcpy(rmc_time, new_time);
 						strcpy(rmc_date, new_date);
+						uint32_t date = atoi(rmc_date);
+						uint32_t time = atoi(rmc_time);
+						setUnixTimestamp(
+							(date % 100) + 2000,	// Year
+							(date % 10000) / 100,	// Month
+							date / 10000,			// Day
+							time / 10000,			// Hour
+							(time % 10000) / 100,	// Minute
+							time % 100,				// Second
+							0						// Millisecond
+						);
 						break;
 				}
 
