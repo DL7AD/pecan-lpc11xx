@@ -23,6 +23,9 @@
 #define BUS_UART				5
 #define BUS_I2C					6
 
+#define PRIMARY					7
+#define SECONDARY				8
+
 #define AD0						0
 #define AD1						1
 #define AD2						2
