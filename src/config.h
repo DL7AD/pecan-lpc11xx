@@ -22,19 +22,6 @@
 #include "LPC11xx.h"
 
 
-// --------------------------------------------------------------------------
-// THIS IS THE TRACKUINO FIRMWARE CONFIGURATION FILE. YOUR CALLSIGN AND
-// OTHER SETTINGS GO HERE.
-//
-// NOTE: all pins are Arduino based, not the Atmega chip. Mapping:
-// http://www.arduino.cc/en/Hacking/PinMapping
-// --------------------------------------------------------------------------
-
-
-// --------------------------------------------------------------------------
-// APRS config (aprs.c)
-// --------------------------------------------------------------------------
-
 // Set your callsign and SSID here. Common values for the SSID are
 // (from http://zlhams.wikidot.com/aprs-ssidguide):
 //
@@ -82,7 +69,7 @@
 // Battery type
 // PRIMARY		LiFeSe2 Power save modes disabled, battery will be used until completely empty
 // SECONDARY	LiFePO4 GPS will be kept off below 2700mV, no transmission is made below 2500mV to keep the accumulator healthy
-#define BATTERY_TYPE				SECONDARY
+#define BATTERY_TYPE				PRIMARY
 
 // Frequency (which is used after reset state)
 #define DEFAULT_FREQUENCY			144800000
@@ -92,7 +79,7 @@
 // Radio output power depends on VCC voltage
 // 127 @ VCC=3400mV ~ 100mW
 // 20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER					30
+#define RADIO_POWER					127
 
 
 /* ---------------------------- Target definitions ---------------------------- */
