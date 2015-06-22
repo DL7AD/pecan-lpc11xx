@@ -273,7 +273,8 @@ void transmit_position(gpsstate_t gpsstate)
 	if(gpsstate != GPS_LOCK) {
 		loss_of_gps_counter++;
 		if(loss_of_gps_counter >= 15) { // make sure we don't get above 15
-			loss_of_gps_counter = 15; // will stay at 15 at permanent gps loss. 15 is maximum due to telemetry overflow
+			loss_of_gps_counter = 0; // will stay at 15 at permanent gps loss. 15 is maximum due to telemetry overflow
+			gps_reset();
 		}
 		ax25_send_string(" GPS loss ");
 		nsprintf(temp, 3, "%02d", loss_of_gps_counter);
