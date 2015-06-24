@@ -30,6 +30,9 @@
 #include "debug.h"
 #include "adc.h"
 #include "bmp180.h"
+#include "ssd1306.h"
+
+char tmp[22];
 
 /**
  * Enter power save mode for 8 seconds. Power save is disabled and replaced by
@@ -55,6 +58,20 @@ int main(void)
 	// To get access again, its necessary to access the chip in active mode. If chip is almost everytime in sleep mode, it can be
 	// only waked up by the reset pin which is (as mentioned before) disabled.
 	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
+
+	Init_SSD1306();
+	addLine("Start Pecan Pico 6");
+	delay(1000);
+	addLine("Sven DL7AD / AF5LI");
+	addLine("Thomas DL4MDW / KT5TK");
+	delay(1000);
+
+	ADC_Init();
+	snprintf(tmp, sizeof(tmp), "Battery: %d mV", getBatteryMV());
+	addLine(tmp);
+	snprintf(tmp, sizeof(tmp), "Solar: %d mV", getSolarMV());
+	addLine(tmp);
+	ADC_DeInit();
 
 	trackingstate_t trackingstate = TRANSMIT;
 	gpsstate_t gpsstate = GPS_LOSS;
@@ -137,12 +154,25 @@ int main(void)
 
 			case TRANSMIT:
 				// Transmit APRS telemetry
+				addLine("Transmit Telemetry");
 				transmit_telemetry();
 
 				// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
 				power_save(6000);
 
 				// Transmit APRS position
+				addLine("Transmit position");
+				switch(gpsstate) {
+				case GPS_LOCK:
+					addLine("GPS lock");
+					break;
+				case GPS_LOSS:
+					addLine("GPS loss");
+					break;
+				case GPS_LOW_BATT:
+					addLine("GPS off (low battery)");
+					break;
+				}
 				transmit_position(gpsstate);
 
 				// Change state depending on GPS status
