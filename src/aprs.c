@@ -189,8 +189,8 @@ void transmit_telemetry(void)
 	ax25_send_footer();
 
 	// Transmit
-	addLine("Transmit Telemetry");
-	drawLines();
+	terminal_addLine("Transmit Telemetry");
+	terminal_flush();
 	ax25_flush_frame();
 }
 
@@ -298,34 +298,34 @@ void transmit_position(gpsstate_t gpsstate)
 	// BAT XXXX mV    -XX C
 	// SOL XXXX mV  XXXXX Pa
 
-	addLine("Transmit Position");
+	terminal_addLine("Transmit Position");
 
 	if(gpsstate == GPS_LOSS) {
-		addLine("GPS loss");
+		terminal_addLine("GPS loss");
 	} else if(gpsstate == GPS_LOW_BATT) {
-		addLine("GPS lowbatt power off");
+		terminal_addLine("GPS lowbatt power off");
 	} else if(gpsstate == GPS_LOCK) {
 		nsprintf(temp, 22, "GPS lock (in %d sec)", time2lock);
-		addLine(temp);
+		terminal_addLine(temp);
 	}
 
 	nsprintf(temp, 22, "%s %s", gps_aprs_lat, gps_aprs_lon);
-	addLine(temp);
+	terminal_addLine(temp);
 
 	nsprintf(temp, 22, "ALT%6d m   SATS %d", altitude, gps_sats);
-	addLine(temp);
+	terminal_addLine(temp);
 
 	ADC_Init();
 
 	nsprintf(temp, 22, "BAT%5d mV%7d %cC", getBatteryMV(), bmp180temp, (char)0xF8);
-	addLine(temp);
+	terminal_addLine(temp);
 
 	nsprintf(temp, 22, "SOL%5d mV%7d Pa", getSolarMV(), bmp180pressure);
-	addLine(temp);
+	terminal_addLine(temp);
 
 	ADC_DeInit();
 
-	drawLines();
+	terminal_flush();
 
 	// Transmit
 	ax25_flush_frame();

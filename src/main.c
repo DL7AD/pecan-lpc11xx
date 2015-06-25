@@ -61,12 +61,12 @@ int main(void)
 	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
 
 	Init_SSD1306();
-	addLine("Start Pecan Pico 6");
-	drawLines();
+	terminal_addLine("Start Pecan Pico 6");
+	terminal_flush();
 	delay(1000);
-	addLine("Sven DL7AD / AF5LI");
-	addLine("Thomas DL4MDW / KT5TK");
-	drawLines();
+	terminal_addLine("Sven DL7AD / AF5LI");
+	terminal_addLine("Thomas DL4MDW / KT5TK");
+	terminal_flush();
 	delay(1000);
 
 	trackingstate_t trackingstate = TRANSMIT;

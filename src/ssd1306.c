@@ -9,6 +9,9 @@
   * Written by Limor Fried/Ladyada  for Adafruit Industries.
   * BSD license, check license.txt for more information
   * All text above, and the splash screen below must be included in any redistribution
+  *
+  * The SSD1306 will be controled by I2C bitbanging. The SDA and SCL pins can
+  * be found in the header file.
   */
 
 #include "ssd1306.h"
@@ -20,9 +23,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-uint8_t poledbuff[1024];
-char textbuffer[7][22];
+uint8_t poledbuff[1024]; // Bitmap buffer
+char textbuffer[7][22]; // Terminal buffer
 
+/**
+ * Initialized SSD1306
+ */
 void Init_SSD1306(void) {
 	// Power up SSD1306
 	SSD1306_PIN_INIT();
@@ -55,6 +61,12 @@ void Init_SSD1306(void) {
 	i2c_send_command_1byte(SSD_Display_On);
 }
 
+/**
+ * Transmits one byte on I2C bus
+ * @param send_start Add start condition at the beginning
+ * @param send_stop Add stop condition at the end
+ * @param byte Byte to be sent
+ */
 void i2c_write_byte(bool send_start, bool send_stop, uint8_t byte) {
 	if(send_start) {
 		SDA(LOW);
@@ -81,24 +93,11 @@ void i2c_write_byte(bool send_start, bool send_stop, uint8_t byte) {
 		SDA(HIGH);
 	}
 }
-void i2c_send_command_1byte(uint8_t b1) {
-	i2c_write_byte(true, false, SSD1306_I2C_ADDRESS);
-	i2c_write_byte(false, false, SSD_COMMAND_MODE);
-	i2c_write_byte(false, true, b1);
-}
-void i2c_send_command_2bytes(uint8_t b1, uint8_t b2) {
-	i2c_write_byte(true, false, SSD1306_I2C_ADDRESS);
-	i2c_write_byte(false, false, SSD_COMMAND_MODE);
-	i2c_write_byte(false, false, b1);
-	i2c_write_byte(false, true, b2);
-}
-void i2c_send_command_3bytes(uint8_t b1, uint8_t b2, uint8_t b3) {
-	i2c_write_byte(true, false, SSD1306_I2C_ADDRESS);
-	i2c_write_byte(false, false, SSD_COMMAND_MODE);
-	i2c_write_byte(false, false, b1);
-	i2c_write_byte(false, false, b2);
-	i2c_write_byte(false, true, b3);
-}
+
+/**
+ * Transmits a byte list on the I2C bus
+ * @param b1 Byte to be sent
+ */
 void i2c_send_bytes_list(uint8_t len, uint8_t* bytes) {
 	i2c_write_byte(true, false, SSD1306_I2C_ADDRESS);
 	uint8_t i;
@@ -107,7 +106,50 @@ void i2c_send_bytes_list(uint8_t len, uint8_t* bytes) {
 	i2c_write_byte(false, true, bytes[len-1]);
 }
 
-void ssd1306_drawPixel(uint8_t x, uint8_t y, bool color) {
+/**
+ * Transmits one byte on I2C bus to SSD1306 in SSD1306 command mode
+ * @param b1 Byte to be sent
+ */
+void i2c_send_command_1byte(uint8_t b1) {
+	i2c_write_byte(true, false, SSD1306_I2C_ADDRESS);
+	i2c_write_byte(false, false, SSD_COMMAND_MODE);
+	i2c_write_byte(false, true, b1);
+}
+
+/**
+ * Transmits two bytes on I2C bus to SSD1306 in SSD1306 command mode
+ * @param b1 Byte to be sent
+ * @param b2 Byte to be sent
+ */
+void i2c_send_command_2bytes(uint8_t b1, uint8_t b2) {
+	i2c_write_byte(true, false, SSD1306_I2C_ADDRESS);
+	i2c_write_byte(false, false, SSD_COMMAND_MODE);
+	i2c_write_byte(false, false, b1);
+	i2c_write_byte(false, true, b2);
+}
+
+/**
+ * Transmits three bytes on I2C bus to SSD1306 in SSD1306 command mode
+ * @param b1 Byte to be sent
+ * @param b2 Byte to be sent
+ * @param b3 Byte to be sent
+ */
+void i2c_send_command_3bytes(uint8_t b1, uint8_t b2, uint8_t b3) {
+	i2c_write_byte(true, false, SSD1306_I2C_ADDRESS);
+	i2c_write_byte(false, false, SSD_COMMAND_MODE);
+	i2c_write_byte(false, false, b1);
+	i2c_write_byte(false, false, b2);
+	i2c_write_byte(false, true, b3);
+}
+
+/**
+ * Draws a pixel into the bitmap buffer
+ * @x x-Position
+ * @y y-Position
+ * @color Pixel color (either white or black)
+ */
+void ssd1306_drawPixel(uint8_t x, uint8_t y, bool color)
+{
 	uint8_t* p = poledbuff;
 
 	if (x >= OLED_WIDTH || y >= OLED_HEIGHT)
@@ -123,7 +165,44 @@ void ssd1306_drawPixel(uint8_t x, uint8_t y, bool color) {
 		*p &= ~(1 << (y%8));
 }
 
-void ssd1306_display(void)
+/**
+ * Draws a char into the bitmap buffer
+ * @x x-Position
+ * @y y-Position
+ * @color Char color (either white or black)
+ * @color Background color (either white or black)
+ */
+void ssd1306_drawChar(int16_t x, int16_t y, char c, uint16_t color, uint16_t bg)
+{
+	if((x >= OLED_WIDTH) || (y >= OLED_HEIGHT) || ((x + 6 - 1) < 0) || ((y + 8 - 1) < 0))
+		return;
+
+	bool _cp437 = true;
+	if(!_cp437 && (c >= 176)) c++; // Handle 'classic' charset behavior
+
+	int8_t i;
+	for(i=0; i<6; i++ ) {
+		uint8_t line;
+		if (i == 5)
+			line = 0x0;
+		else
+			line = font[(c*5)+i];
+		int8_t j;
+		for(j = 0; j<8; j++) {
+			if (line & 0x1) {
+				ssd1306_drawPixel(x+i, y+j, color);
+			} else if (bg != color) {
+				ssd1306_drawPixel(x+i, y+j, bg);
+			}
+			line >>= 1;
+		}
+	}
+}
+
+/**
+ * Flushes/Transmits the bitmap buffer to the SSD1306 via I2C
+ */
+void ssd1306_flush(void)
 {
 	i2c_send_command_1byte(SSD1306_SETLOWCOLUMN  | 0x0); // low col = 0
 	i2c_send_command_1byte(SSD1306_SETHIGHCOLUMN | 0x0); // hi col = 0
@@ -150,60 +229,34 @@ void ssd1306_display(void)
 	}
 }
 
-void drawChar(int16_t x, int16_t y, char c, uint16_t color, uint16_t bg) {
-
-	if((x >= OLED_WIDTH) || (y >= OLED_HEIGHT) || ((x + 6 - 1) < 0) || ((y + 8 - 1) < 0))
-		return;
-
-	bool _cp437 = true;
-	if(!_cp437 && (c >= 176)) c++; // Handle 'classic' charset behavior
-
-	int8_t i;
-	for(i=0; i<6; i++ ) {
-		uint8_t line;
-		if (i == 5)
-			line = 0x0;
-		else
-			line = font[(c*5)+i];
-		int8_t j;
-		for(j = 0; j<8; j++) {
-			if (line & 0x1) {
-				ssd1306_drawPixel(x+i, y+j, color);
-			} else if (bg != color) {
-				ssd1306_drawPixel(x+i, y+j, bg);
-			}
-			line >>= 1;
-		}
-	}
-}
-
-void drawLines(void) {
+/**
+ * Converts the terminal buffer into bitmap and flushes the bitmap to the
+ * SSD1306.
+ */
+void terminal_flush(void)
+{
 	uint8_t line, charN;
-	for(line=0; line<7; line++) {
+	for(line=0; line<7; line++)
+	{
 		bool eol = false;
-		for(charN=0; charN<21; charN++) {
+		for(charN=0; charN<21; charN++)
+		{
 			if(textbuffer[line][charN] == '\0')
 				eol = true;
-			drawChar(charN*6, line*9+2, (eol ? ' ' : textbuffer[line][charN]), OLED_WHITE, OLED_BLACK);
+			ssd1306_drawChar(charN*6, line*9+2, (eol ? ' ' : textbuffer[line][charN]), OLED_WHITE, OLED_BLACK);
 		}
 	}
-	ssd1306_display();
+	ssd1306_flush();
 }
 
-void addLine(char* line) {
+/**
+ * Adds a line to the terminals bottom.
+ * @param line Text to be writen into the terminal (max. 21 chars!)
+ */
+void terminal_addLine(char* line)
+{
 	uint8_t i;
 	for(i=1; i<7; i++)
 		memcpy(textbuffer[i-1], textbuffer[i], 22);
 	memcpy(textbuffer[6], line, 22);
 }
-
-
-
-
-
-
-
-
-
-
-
