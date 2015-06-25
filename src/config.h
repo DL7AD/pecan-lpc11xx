@@ -79,7 +79,7 @@
 // Radio output power depends on VCC voltage
 // 127 @ VCC=3400mV ~ 100mW
 // 20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER					127
+#define RADIO_POWER					10
 
 
 /* ---------------------------- Target definitions ---------------------------- */

@@ -147,7 +147,7 @@ void SendCmdReceiveAnswerSetDelay(uint8_t* txData, uint32_t byteCountTx, uint8_t
 //	}
 
 
-	// Zusätzliches delay
+	// Zusaetzliches delay
 	if(delays)
 		delay(delays);
 }
