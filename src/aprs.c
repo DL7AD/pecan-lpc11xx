@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include "Si446x.h"
 #include "i2c.h"
+#include "ssd1306.h"
 
 // Module globals
 static uint16_t telemetry_counter = 0;
@@ -186,7 +187,11 @@ void transmit_telemetry(void)
 	ax25_send_byte('0');
 
 	ax25_send_footer();
-	ax25_flush_frame();                 // Tell the modem to go
+
+	// Transmit
+	addLine("Transmit Telemetry");
+	drawLines();
+	ax25_flush_frame();
 }
 
 /**
@@ -194,7 +199,7 @@ void transmit_telemetry(void)
  */
 void transmit_position(gpsstate_t gpsstate)
 {
-	char temp[12];
+	char temp[22];
 	float altitude = 0;
 	int8_t bmp180temp = 0;
 	int32_t bmp180pressure = 0;
@@ -285,7 +290,46 @@ void transmit_position(gpsstate_t gpsstate)
 	}
 
 	ax25_send_footer();
-	ax25_flush_frame();                 // Tell the modem to go
+
+	// Print debug message
+	// GPS LOCK (in XXX sec)/LOSS/LOW BATT
+	// 52.1524 013.2635
+	// ALT XXXXX m   SATS XX
+	// BAT XXXX mV    -XX C
+	// SOL XXXX mV  XXXXX Pa
+
+	addLine("Transmit Position");
+
+	if(gpsstate == GPS_LOSS) {
+		addLine("GPS loss");
+	} else if(gpsstate == GPS_LOW_BATT) {
+		addLine("GPS lowbatt power off");
+	} else if(gpsstate == GPS_LOCK) {
+		nsprintf(temp, 22, "GPS lock (in %d sec)", time2lock);
+		addLine(temp);
+	}
+
+	nsprintf(temp, 22, "%s %s", gps_aprs_lat, gps_aprs_lon);
+	addLine(temp);
+
+	nsprintf(temp, 22, "ALT%6d m   SATS %d", altitude, gps_sats);
+	addLine(temp);
+
+	ADC_Init();
+
+	nsprintf(temp, 22, "BAT%5d mV%7d %cC", getBatteryMV(), bmp180temp, (char)0xF8);
+	addLine(temp);
+
+	nsprintf(temp, 22, "SOL%5d mV%7d Pa", getSolarMV(), bmp180pressure);
+	addLine(temp);
+
+	ADC_DeInit();
+
+	drawLines();
+
+	// Transmit
+	ax25_flush_frame();
+
 	strcpy(gps_aprs_lat_old, gps_aprs_lat);
 	strcpy(gps_aprs_lon_old, gps_aprs_lon);
 	strcpy(gps_time_old, gps_time);
