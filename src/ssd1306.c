@@ -24,6 +24,10 @@ uint8_t poledbuff[1024];
 char textbuffer[7][22];
 
 void Init_SSD1306(void) {
+	// Power up SSD1306
+	SSD1306_PIN_INIT();
+
+	// Configure SSD1306
 	i2c_send_command_1byte(SSD_Display_Off);
 	i2c_send_command_2bytes(SSD1306_SETDISPLAYCLOCKDIV, 0x80);
 	i2c_send_command_2bytes(SSD1306_SETMULTIPLEX, 0x3F);
@@ -191,7 +195,6 @@ void addLine(char* line) {
 	for(i=1; i<7; i++)
 		memcpy(textbuffer[i-1], textbuffer[i], 22);
 	memcpy(textbuffer[6], line, 22);
-	drawLines(); // Update buffer
 }
 
 

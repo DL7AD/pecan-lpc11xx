@@ -21,6 +21,10 @@
 		OUT3_SET(false); \
 	} \
 }
+#define SSD1306_PIN_INIT() { \
+	OUT1_CONF_WRITE(); \
+	OUT1_SET(HIGH); \
+}
 
 #define SSD_COMMAND_MODE			0x00
 #define SSD_Data_Mode				0x40
