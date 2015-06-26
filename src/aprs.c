@@ -211,6 +211,11 @@ void transmit_position(gpsstate_t gpsstate)
 	BMP180_DeInit();
 	#endif
 
+	ADC_Init();
+	uint16_t battery = getBatteryMV();
+	uint16_t solar = getSolarMV();
+	ADC_DeInit();
+
 	configure_transmitter();
 
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
@@ -247,17 +252,15 @@ void transmit_position(gpsstate_t gpsstate)
 	ax25_send_string(temp);
 	ax25_send_string(" ");
     
-	ADC_Init();
-	itoa(getBatteryMV(), temp, 10);
+	itoa(battery, temp, 10);
 	ax25_send_string(temp);
 	ax25_send_string("mVb ");
 
 	#ifdef SOLAR_AVAIL
-	itoa(getSolarMV(), temp, 10);
+	itoa(solar, temp, 10);
 	ax25_send_string(temp);
 	ax25_send_string("mVs ");
 	#endif
-	ADC_DeInit();
 
 	if (bmp180pressure > 0) {
 		ax25_send_string(itoa(bmp180temp, temp, 10));
@@ -292,12 +295,6 @@ void transmit_position(gpsstate_t gpsstate)
 	ax25_send_footer();
 
 	// Print debug message
-	// GPS LOCK (in XXX sec)/LOSS/LOW BATT
-	// 52.1524 013.2635
-	// ALT XXXXX m   SATS XX
-	// BAT XXXX mV    -XX C
-	// SOL XXXX mV  XXXXX Pa
-
 	terminal_addLine("Transmit Position");
 
 	if(gpsstate == GPS_LOSS) {
@@ -312,15 +309,15 @@ void transmit_position(gpsstate_t gpsstate)
 	nsprintf(temp, 22, "%s %s", gps_aprs_lat, gps_aprs_lon);
 	terminal_addLine(temp);
 
-	nsprintf(temp, 22, "ALT%6d m   SATS %d", altitude, gps_sats);
+	nsprintf(temp, 22, "ALT%6d m   SATS %d", ((int)altitude), gps_sats);
 	terminal_addLine(temp);
 
 	ADC_Init();
 
-	nsprintf(temp, 22, "BAT%5d mV%7d %cC", getBatteryMV(), bmp180temp, (char)0xF8);
+	nsprintf(temp, 22, "BAT%5d mV%7d %cC", battery, bmp180temp, (char)0xF8);
 	terminal_addLine(temp);
 
-	nsprintf(temp, 22, "SOL%5d mV%7d Pa", getSolarMV(), bmp180pressure);
+	nsprintf(temp, 22, "SOL%5d mV%7d Pa", solar, bmp180pressure);
 	terminal_addLine(temp);
 
 	ADC_DeInit();
