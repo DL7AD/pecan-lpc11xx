@@ -189,7 +189,13 @@ void transmit_telemetry(void)
 	ax25_send_footer();
 
 	// Transmit
-	terminal_addLine("Transmit Telemetry");
+	if(S_CALLSIGN_ID == 0) {
+		nsprintf(temp, 22, "Send Tele.%11s", S_CALLSIGN);
+	} else {
+		nsprintf(temp, 22, "Send Tele.%8s-%d", S_CALLSIGN, S_CALLSIGN_ID);
+	}
+	terminal_addLine(temp);
+
 	terminal_flush();
 	ax25_flush_frame();
 }
@@ -295,7 +301,12 @@ void transmit_position(gpsstate_t gpsstate)
 	ax25_send_footer();
 
 	// Print debug message
-	terminal_addLine("Transmit Position");
+	if(S_CALLSIGN_ID == 0) {
+		nsprintf(temp, 22, "Send Pos.%12s", S_CALLSIGN);
+	} else {
+		nsprintf(temp, 22, "Send Pos.%9s-%d", S_CALLSIGN, S_CALLSIGN_ID);
+	}
+	terminal_addLine(temp);
 
 	if(gpsstate == GPS_LOSS) {
 		terminal_addLine("GPS loss");
