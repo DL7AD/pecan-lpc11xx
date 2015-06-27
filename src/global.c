@@ -50,6 +50,34 @@ void setUnixTimestamp(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, u
 	unixTimeStamp = time * 1000 + millisecond;
 }
 
+date_t getUnixTimestampDecoded(void) {
+	date_t date;
+	uint64_t dateRaw = unixTimeStamp / 1000;
+
+	date.millisecond = unixTimeStamp % 1000;
+	date.year = 1970;
+	while(true)
+	{
+		uint32_t secondsInThisYear = date.year % 4 ? 31536000 : 31622400;
+		if(dateRaw >= secondsInThisYear) {
+			dateRaw -= secondsInThisYear;
+			date.year++;
+		} else {
+			break;
+		}
+	}
+
+	for(date.month=1; (date.year%4 ? nonLeapYear[date.month] : leapYear[date.month])*86400<dateRaw; date.month++);
+	dateRaw -= (date.year%4 ? nonLeapYear[date.month-1] : leapYear[date.month-1])*86400;
+
+	date.day    = (dateRaw / 86400) + 1;
+	date.hour   = (dateRaw % 86400) / 3600;
+	date.minute = (dateRaw % 3600) / 60;
+	date.second = dateRaw % 60;
+
+	return date;
+}
+
 /**
  * @brief Returns unix timestamp
  * @return time UNIX time in ms
