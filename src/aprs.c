@@ -188,15 +188,17 @@ void transmit_telemetry(void)
 
 	ax25_send_footer();
 
-	// Transmit
-	if(S_CALLSIGN_ID == 0) {
-		nsprintf(temp, 22, "Send Tele.%11s", S_CALLSIGN);
+	// Print debug message
+	if(!S_CALLSIGN_ID) {
+		nsprintf(temp, 22, "> Send Tele.%9s", S_CALLSIGN);
 	} else {
-		nsprintf(temp, 22, "Send Tele.%8s-%d", S_CALLSIGN, S_CALLSIGN_ID);
+		nsprintf(temp, 22, "> Send Tele.%6s-%d", S_CALLSIGN, S_CALLSIGN_ID);
 	}
+	terminal_clear();
 	terminal_addLine(temp);
-
 	terminal_flush();
+
+	// Transmit
 	ax25_flush_frame();
 }
 
@@ -301,10 +303,10 @@ void transmit_position(gpsstate_t gpsstate)
 	ax25_send_footer();
 
 	// Print debug message
-	if(S_CALLSIGN_ID == 0) {
-		nsprintf(temp, 22, "Send Pos.%12s", S_CALLSIGN);
+	if(!S_CALLSIGN_ID) {
+		nsprintf(temp, 22, "> Send Pos.%10s", S_CALLSIGN);
 	} else {
-		nsprintf(temp, 22, "Send Pos.%9s-%d", S_CALLSIGN, S_CALLSIGN_ID);
+		nsprintf(temp, 22, "> Send Pos.%7s-%d", S_CALLSIGN, S_CALLSIGN_ID);
 	}
 	terminal_addLine(temp);
 
@@ -320,18 +322,18 @@ void transmit_position(gpsstate_t gpsstate)
 	nsprintf(temp, 22, "%s %s", gps_aprs_lat, gps_aprs_lon);
 	terminal_addLine(temp);
 
-	nsprintf(temp, 22, "ALT%6d m   SATS %d", ((int)altitude), gps_sats);
+	date_t date = getUnixTimestampDecoded();
+	nsprintf(temp, 22, "TIM %02d-%02d-%02d %02d:%02d:%02d", date.year%100, date.month, date.day, date.hour, date.minute, date.second);
 	terminal_addLine(temp);
 
-	ADC_Init();
+	nsprintf(temp, 22, "ALT%6d m   SATS %d", ((int)altitude), gps_sats);
+	terminal_addLine(temp);
 
 	nsprintf(temp, 22, "BAT%5d mV%7d %cC", battery, bmp180temp, (char)0xF8);
 	terminal_addLine(temp);
 
 	nsprintf(temp, 22, "SOL%5d mV%7d Pa", solar, bmp180pressure);
 	terminal_addLine(temp);
-
-	ADC_DeInit();
 
 	terminal_flush();
 
@@ -349,4 +351,44 @@ void configure_transmitter(void)
 	uint32_t frequency = gps_get_region_frequency();
 	modem_set_tx_freq(frequency); // TODO
 	modem_set_tx_power(RADIO_POWER);
+}
+
+void display_configuration(void)
+{
+	char temp[22];
+
+	if(TARGET == TARGET_PECAN_PICO6) {
+		terminal_addLine("> Start Pecan Pico 6");
+	} else if(TARGET == TARGET_PECAN_FEMTO2_1) {
+		terminal_addLine("> Start Pecan Femto 2");
+	}
+	if(!S_CALLSIGN_ID) {
+		nsprintf(temp, 22, "Call:%16s", S_CALLSIGN);
+	} else {
+		nsprintf(temp, 22, "Call:%13s-%d", S_CALLSIGN, S_CALLSIGN_ID);
+	}
+	terminal_addLine(temp);
+	#if !defined(DIGI_PATH1) && !defined(DIGI_PATH2)
+	nsprintf(temp, 22, "Path:            none");
+	#elif defined(DIGI_PATH1) && !defined(DIGI_PATH2)
+	nsprintf(temp, 22, "Path:%14s-%d", DIGI_PATH1, DIGI_PATH1_TTL);
+	#else
+	nsprintf(temp, 22, "Path: %s-%d,%s-%d", DIGI_PATH1, DIGI_PATH1_TTL, DIGI_PATH2, DIGI_PATH2_TTL);
+	#endif
+	terminal_addLine(temp);
+
+	nsprintf(temp, 22, "Radio power:%9d", RADIO_POWER);
+	terminal_addLine(temp);
+
+	if(BATTERY_TYPE == PRIMARY) {
+		terminal_addLine("Battery type:     PRI");
+	} else {
+		terminal_addLine("Battery type:     SEC");
+	}
+
+	nsprintf(temp, 22, "Sleep cycle:%6dsec", TIME_SLEEP_CYCLE/1000);
+	terminal_addLine(temp);
+	nsprintf(temp, 22, "max GPS cycle:%4dsec", TIME_SLEEP_CYCLE/1000);
+	terminal_addLine(temp);
+	terminal_flush();
 }

@@ -31,9 +31,7 @@
 #include "adc.h"
 #include "bmp180.h"
 #include "ssd1306.h"
-//#include "small_printf_code.h"
 
-char tmp[22];
 
 /**
  * Enter power save mode for 8 seconds. Power save is disabled and replaced by
@@ -55,17 +53,18 @@ int main(void)
 {
 	TargetResetInit(); // Configures clock and SystemTick timer
 
+	// Display first heartbeat
+	Init_SSD1306();
+	display_configuration();
+
 	// This delay is necessary to get access again after module fell into a deep sleep state in which the reset pin is disabled !!!
 	// To get access again, its necessary to access the chip in active mode. If chip is almost everytime in sleep mode, it can be
 	// only waked up by the reset pin which is (as mentioned before) disabled.
 	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
 
-	Init_SSD1306();
-	terminal_addLine("Start Pecan Pico 6");
-	terminal_flush();
-	delay(1000);
-	terminal_addLine("Sven DL7AD / AF5LI");
-	terminal_addLine("Thomas DL4MDW / KT5TK");
+	// Clear terminal and display cycle start
+	terminal_clear();
+	terminal_addLine("> Start cycle");
 	terminal_flush();
 	delay(1000);
 

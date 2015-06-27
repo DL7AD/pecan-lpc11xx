@@ -260,3 +260,13 @@ void terminal_addLine(char* line)
 		memcpy(textbuffer[i-1], textbuffer[i], 22);
 	memcpy(textbuffer[6], line, 22);
 }
+
+/**
+ * Clears the terminal buffer
+ */
+void terminal_clear(void)
+{
+	uint8_t i;
+	for(i=0; i<7; i++)
+		terminal_addLine("");
+}

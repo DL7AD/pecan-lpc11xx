@@ -71,5 +71,6 @@ void ssd1306_flush(void);
 void ssd1306_drawChar(int16_t x, int16_t y, char c, uint16_t color, uint16_t bg);
 void terminal_flush(void);
 void terminal_addLine(char* line);
+void terminal_clear(void);
 
 #endif
