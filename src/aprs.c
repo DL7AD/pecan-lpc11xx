@@ -34,9 +34,9 @@
 static uint16_t telemetry_counter = 0;
 static uint16_t loss_of_gps_counter = 0;
 
-char gps_aprs_lat_old[]	= "0000.00N";
-char gps_aprs_lon_old[]	= "00000.00W";
-char gps_time_old[]		= "000000";
+//char gps_aprs_lat_old[]	= "0000.00N";
+//char gps_aprs_lon_old[]	= "00000.00W";
+//char gps_time_old[]		= "000000";
 
 // changed from const  
 s_address_t addresses[] =
@@ -119,7 +119,7 @@ void transmit_telemetry(void)
 
 
 	// fill the 3rd telemetry value with a number that's proportional to the altitude:
-	nsprintf(temp, 4, "%03d", (int32_t)abs((meters_to_feet(gps_altitude) + 0.5)/1000L)); // Altitude in kfeet; Must be > 0, therefore abs()
+	nsprintf(temp, 4, "%03d", (int32_t)abs((meters_to_feet(lastFix.altitude) + 0.5)/1000L)); // Altitude in kfeet; Must be > 0, therefore abs()
 	ax25_send_string(temp);               // write 8 bit value
 	ax25_send_byte(',');
 
@@ -140,7 +140,7 @@ void transmit_telemetry(void)
 
 
 	// Time to lock; Write to T# pos 5
-	nsprintf(temp, 4, "%03d", time2lock); // TTL in cycle periods
+	nsprintf(temp, 4, "%03d", lastFix.time2lock); // TTL in cycle periods
 	ax25_send_string(temp);               // write 8 bit value
 	ax25_send_byte(',');
 
@@ -161,23 +161,19 @@ void transmit_telemetry(void)
 	// Next two bits are the signum of latitude/longitude
 	// East = 1, West = 0
 	// North = 1, South = 0
-	if(gps_lat > 0) {
+	if(lastFix.latitude > 0) {
 		ax25_send_byte('1');
 	} else {
 		ax25_send_byte('0');
 	}
 
-	if(gps_lon > 0) {
+	if(lastFix.longitude > 0) {
 		ax25_send_byte('1');
 	} else {
 		ax25_send_byte('0');
 	}
 
-
-	// Check if the GPS is on or off at the time of transmission
-	value = 1;          // read ADC
-
-	if(value > 512) {
+	if(gpsIsOn()) {
 		ax25_send_byte('1');
 	} else {
 		ax25_send_byte('0');
@@ -208,7 +204,7 @@ void transmit_telemetry(void)
 void transmit_position(gpsstate_t gpsstate)
 {
 	char temp[22];
-	float altitude = 0;
+	//float altitude = 0;
 	int8_t bmp180temp = 0;
 	int32_t bmp180pressure = 0;
 
@@ -229,34 +225,42 @@ void transmit_position(gpsstate_t gpsstate)
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
 	ax25_send_byte('/');                // Report w/ timestamp, no APRS messaging. $ = NMEA raw data
 
-	altitude = gps_get_altitude();
-  
+	date_t date;
 	if(gpsstate != GPS_LOCK)
 	{
-		//use the old position
-		strcpy(gps_aprs_lat, gps_aprs_lat_old);
-		strcpy(gps_aprs_lon, gps_aprs_lon_old);
-
-		nsprintf(gps_time, 7, "%06d", addtime(atol(gps_time_old), (TIME_SLEEP_CYCLE+TIME_MAX_GPS_SEARCH)/1000)); // TODO: change this to unix timestamp library
-
-		//altitude = 0; // Is this necessary? SSE
-
+		//use the old position with new timestamp
+//		strcpy(gps_aprs_lat, gps_aprs_lat_old);
+//		strcpy(gps_aprs_lon, gps_aprs_lon_old);
+		lastFix.time = getUnixTimestampDecoded(); // Replace old GPS timestamp with current time
+	} else {
+		//date = getUnixTimestampDecoded(); // TODO: Change this timestamp to the pointer when the GPS sample has been actually received
 	}
 
-	ax25_send_string(gps_time);         // 170915 = 17h:09m:15s zulu (not allowed in Status Reports)
+	nsprintf(temp, 7, "%06d", lastFix.time.hour, lastFix.time.minute, lastFix.time.second);
+	ax25_send_string(temp);         // 170915 = 17h:09m:15s zulu (not allowed in Status Reports)
 	ax25_send_byte('h');
-	ax25_send_string(gps_aprs_lat);     // Lat: 38deg and 22.20 min (.20 are NOT seconds, but 1/100th of minutes)
+	uint16_t lat_degree = abs((int16_t)lastFix.latitude);
+	uint32_t lat_decimal = abs((int32_t)(lastFix.latitude*100000))%100000;
+	uint8_t lat_minute = lat_decimal * 6 / 10000;
+	uint8_t lat_second = (lat_decimal * 36 / 1000) % 60;
+	nsprintf(temp, 8, "%02d%02d.%02d", lat_degree, lat_minute, lat_second);
+	ax25_send_string(temp);     // Lat: 38deg and 22.20 min (.20 are NOT seconds, but 1/100th of minutes)
 	ax25_send_byte(APRS_SYMBOL_TABLE);                // Symbol table
-	ax25_send_string(gps_aprs_lon);     // Lon: 000deg and 25.80 min
+	uint16_t lon_degree = abs((int16_t)lastFix.latitude);
+	uint32_t lon_decimal = abs((int32_t)(lastFix.latitude*100000))%100000;
+	uint8_t lon_minute = lon_decimal * 6 / 10000;
+	uint8_t lon_second = (lon_decimal * 36 / 1000) % 60;
+	nsprintf(temp, 9, "%03d%02d.%02d", lon_degree, lon_minute, lon_second);
+
+	ax25_send_string(temp);     // Lon: 000deg and 25.80 min
 	ax25_send_byte(APRS_SYMBOL_ID);                // Symbol: /O=balloon, /-=QTH, \N=buoy
-	nsprintf(temp, 4, "%03d", (int16_t)(gps_course + 0.5));
+	nsprintf(temp, 4, "%03d", lastFix.course);
 	ax25_send_string(temp);             // Course (degrees)
 	ax25_send_byte('/');                // and
-	nsprintf(temp, 4, "%03d", (int16_t)(gps_speed + 0.5));
+	nsprintf(temp, 4, "%03d", lastFix.speed);
 	ax25_send_string(temp);             // speed (knots)
 	ax25_send_string("/A=");            // Altitude (feet). Goes anywhere in the comment area
-	if (altitude < 0) { altitude = 0.0; }; // Negative altitudes are not displayed correctly at aprs.fi :(
-	nsprintf(temp, 7, "%06ld", (int32_t)abs((meters_to_feet(altitude) + 0.5)));
+	nsprintf(temp, 7, "%06ld", (int32_t)abs((meters_to_feet(lastFix.altitude) + 0.5)));
 	ax25_send_string(temp);
 	ax25_send_string(" ");
     
@@ -278,7 +282,7 @@ void transmit_position(gpsstate_t gpsstate)
 		ax25_send_string("Pa ");
 	}
 	ax25_send_string("SATS");
-	nsprintf(temp, 3, "%02d", gps_sats);
+	nsprintf(temp, 3, "%02d", lastFix.satellites);
 	ax25_send_string(temp);
 
 	if(strcmp(APRS_COMMENT, "")) {
@@ -295,7 +299,7 @@ void transmit_position(gpsstate_t gpsstate)
 		ax25_send_string(" GPS loss ");
 		nsprintf(temp, 3, "%02d", loss_of_gps_counter);
 		ax25_send_string(temp);               // write 8 bit value
-		gps_sats = 0;
+		lastFix.satellites = 0;
 	} else {
 		loss_of_gps_counter = 0;
 	}
@@ -315,18 +319,23 @@ void transmit_position(gpsstate_t gpsstate)
 	} else if(gpsstate == GPS_LOW_BATT) {
 		terminal_addLine("GPS lowbatt power off");
 	} else if(gpsstate == GPS_LOCK) {
-		nsprintf(temp, 22, "GPS lock (in %d sec)", time2lock);
+		nsprintf(temp, 22, "GPS lock (in %d sec)", lastFix.time2lock);
 		terminal_addLine(temp);
 	}
 
-	nsprintf(temp, 22, "%s %s", gps_aprs_lat, gps_aprs_lon);
+	nsprintf(
+		temp, 22, "%c%02d%c%02d'%02d\"%c%03d%c%02d'%02d\"",
+		(lastFix.longitude < 0 ? 'S' : 'N'),
+		lat_degree, 0xF8, lat_minute, lat_second,
+		(lastFix.latitude < 0 ? 'W' : 'E'),
+		lon_degree, 0xF8, lon_minute, lon_second
+	);
 	terminal_addLine(temp);
 
-	date_t date = getUnixTimestampDecoded();
 	nsprintf(temp, 22, "TIM %02d-%02d-%02d %02d:%02d:%02d", date.year%100, date.month, date.day, date.hour, date.minute, date.second);
 	terminal_addLine(temp);
 
-	nsprintf(temp, 22, "ALT%6d m   SATS %d", ((int)altitude), gps_sats);
+	nsprintf(temp, 22, "ALT%6d m   SATS %d", lastFix.altitude, lastFix.satellites);
 	terminal_addLine(temp);
 
 	nsprintf(temp, 22, "BAT%5d mV%7d %cC", battery, bmp180temp, (char)0xF8);
@@ -340,9 +349,9 @@ void transmit_position(gpsstate_t gpsstate)
 	// Transmit
 	ax25_flush_frame();
 
-	strcpy(gps_aprs_lat_old, gps_aprs_lat);
-	strcpy(gps_aprs_lon_old, gps_aprs_lon);
-	strcpy(gps_time_old, gps_time);
+//	strcpy(gps_aprs_lat_old, gps_aprs_lat);
+//	strcpy(gps_aprs_lon_old, gps_aprs_lon);
+//	strcpy(gps_time_old, gps_time);
 }
 
 void configure_transmitter(void)

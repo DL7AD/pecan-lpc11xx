@@ -101,19 +101,6 @@
 	0x1F, 0xAD \
 }
 
-//// The ISS Kepplerian Elements calculated dataset (starting at Feb. 6th 00:00:00 UTC)
-//const uint16_t ISSData[] = {
-//	12565, 11545, 10525
-//};
-
-#define ISSData_Length 2   // 2 days will stay below 32 Mbyte
-// Remember to get ISS data:
-// Lookup the UNIX epoch time: http://www.epochconverter.com/
-// cd /home/thomas/Documents/hamradio/balloon/ISS/
-// perl iss.pl 1335009600 5 2012-04-21_1200UTC.dat > 2012-04-21_1200UTC.tsv
-
-#define ISS_FOOTPRINT_RADIUS 2230.0  // Horizont of the ISS in km
-
 // Module declarations
 static void parse_sentence_type(const char * token);
 static void parse_time(const char *token);
@@ -134,9 +121,9 @@ static void parse_altitude(const char *token);
 typedef void (*t_nmea_parser)(const char *token);
 
 typedef enum {
-	SENTENCE_UNK,
-	SENTENCE_GGA,
-	SENTENCE_RMC
+	SENTENCE_UNK, // unknown packet
+	SENTENCE_GGA, // GGA packet
+	SENTENCE_RMC  // RMC packet
 } sentence_t;
 
 
@@ -182,6 +169,11 @@ static const int16_t NUM_OF_UNK_PARSERS = (sizeof(unk_parsers) / sizeof(t_nmea_p
 static const int16_t NUM_OF_GGA_PARSERS = (sizeof(gga_parsers) / sizeof(t_nmea_parser));
 static const int16_t NUM_OF_RMC_PARSERS = (sizeof(rmc_parsers) / sizeof(t_nmea_parser));
 
+gps_t newFix;
+gps_t lastFix;
+uint64_t time_lastRMCpacket;
+uint64_t time_lastGGApacket;
+
 // Module variables
 static sentence_t sentence_type = SENTENCE_UNK;
 static bool at_checksum = false;
@@ -190,31 +182,31 @@ static unsigned char their_checksum = 0;
 static char token[16];
 static int16_t num_tokens = 0;
 static uint16_t offset = 0;
-static bool active = false;
-static char gga_time[7], rmc_time[7], rmc_date[7];
-static char new_time[7], new_date[7];
-static int16_t new_sats, gga_sats;
-static float new_lat;
-static float new_lon;
-static char new_aprs_lat[9];
-static char new_aprs_lon[10];
-static float new_course;
-static float new_speed;
-static float new_altitude;
+//static bool active = false;
+//static char gga_time[7], rmc_time[7], rmc_date[7];
+//static char new_time[7], new_date[7];
+//static int16_t new_sats, gga_sats;
+//static float new_lat;
+//static float new_lon;
+//static char new_aprs_lat[9];
+//static char new_aprs_lon[10];
+//static float new_course;
+//static float new_speed;
+//static float new_altitude;
 
 // Public (extern) variables, readable from other modules
-char gps_time[8];       // HHMMSS
-char gps_date[7];       // DDMMYY
-int16_t gps_sats = 0;
-float gps_lat = 0;
-float gps_lon = 0;
-char gps_aprs_lat[10];
-char gps_aprs_lon[11];
-float gps_course = 0;
-float gps_speed = 0;
-float gps_altitude = -1000.0; //The dead sea at -420 m is theoretically the deepest usable spot on earth where you could use a GPS
-                              //Here we define -1000 m as our invalid gps altitude
-uint8_t time2lock;
+//char gps_time[8];       // HHMMSS
+//char gps_date[7];       // DDMMYY
+//int16_t gps_sats = 0;
+//float gps_lat = 0;
+//float gps_lon = 0;
+//char gps_aprs_lat[10];
+//char gps_aprs_lon[11];
+//float gps_course = 0;
+//float gps_speed = 0;
+//float gps_altitude = -1000.0; //The dead sea at -420 m is theoretically the deepest usable spot on earth where you could use a GPS
+//                              //Here we define -1000 m as our invalid gps altitude
+//uint8_t time2lock;
 
 bool isOn = false;
 
@@ -245,29 +237,36 @@ void parse_sentence_type(const char *token)
 void parse_time(const char *token)
 {
 	// Time can have decimals (fractions of a second), but we only take HHMMSS
-	strncpy(new_time, token, 6);
+	char timestr[7];
+	strncpy(timestr, token, 6);
+	uint32_t timeint = atoi(timestr);
+	newFix.time.hour = timeint / 10000;
+	newFix.time.minute = (timeint % 10000) / 100;
+	newFix.time.second = timeint % 100;
 }
 
 void parse_date(const char *token)
 {
 	// Date in DDMMYY
-	strncpy(new_date, token, 6);
+	char datestr[7];
+	strncpy(datestr, token, 6);
+	uint32_t dateint = atoi(datestr);
+	newFix.time.day = dateint / 10000;
+	newFix.time.month = (dateint % 10000) / 100;
+	newFix.time.year = (dateint % 100) + 2000;
 }
 
 void parse_sats(const char *token)
 {
 	// Date in DDMMYY
-	new_sats = atoi(token);
+	newFix.satellites = atoi(token);
 }
 
 
 void parse_status(const char *token)
 {
 	// "A" = active, "V" = void. We shoud disregard void sentences
-	if (strcmp(token, "A") == 0)
-		active = true;
-	else
-		active = false;
+	newFix.active = strcmp(token, "A") == 0;
 }
 
 void parse_lat(const char *token)
@@ -282,18 +281,14 @@ void parse_lat(const char *token)
 		mins[0] = token[2];
 		mins[1] = token[3];
 		mins[2] = '\0';
-		new_lat = atoi(degs) + atoi(mins) / 60.0 + atoi(token + 5) / 3600.0;
+		newFix.latitude = atoi(degs) + atoi(mins) / 60.0 + atoi(token + 5) / 3600.0;
 	}
-	// APRS-ready latitude
-	strncpy(new_aprs_lat, token, 7);
 }
 
 void parse_lat_hemi(const char *token)
 {
-	if (token[0] == 'S')
-		new_lat = -new_lat;
-	new_aprs_lat[7] = token[0];
-	new_aprs_lon[8] = '\0';
+	if(token[0] == 'S')
+		newFix.latitude = -newFix.latitude;
 }
 
 void parse_lon(const char *token)
@@ -301,7 +296,7 @@ void parse_lon(const char *token)
 	// Longitude is in the format "DDD" + "MM" (+ ".M{...}M")
 	char degs[4];
 	char mins[3];
-	if (strlen(token) >= 5) {
+	if(strlen(token) >= 5) {
 		degs[0] = token[0];
 		degs[1] = token[1];
 		degs[2] = token[2];
@@ -309,33 +304,29 @@ void parse_lon(const char *token)
 		mins[0] = token[3];
 		mins[1] = token[4];
 		mins[2] = '\0';
-		new_lon = atoi(degs) + atoi(mins) / 60.0 + atoi(token + 6) / 3600.0;
+		newFix.longitude = atoi(degs) + atoi(mins) / 60.0 + atoi(token + 6) / 3600.0;
 	}
-	// APRS-ready longitude
-	strncpy(new_aprs_lon, token, 8);
 }
 
 void parse_lon_hemi(const char *token)
 {
-	if (token[0] == 'W')
-		new_lon = -new_lon;
-	new_aprs_lon[8] = token[0];
-	new_aprs_lon[9] = '\0';
+	if(token[0] == 'W')
+		newFix.longitude = -newFix.longitude;
 }
 
 void parse_speed(const char *token)
 {
-	new_speed = atoi(token);
+	newFix.speed = atoi(token);
 }
 
 void parse_course(const char *token)
 {
-	new_course = atoi(token);
+	newFix.course = atoi(token);
 }
 
 void parse_altitude(const char *token)
 {
-	new_altitude = atoi(token);
+	newFix.altitude = atoi(token);
 }
 
 
@@ -427,11 +418,12 @@ void gps_setNMEAstrings() {
 
 void gps_resetBuffer()
 {
-	strcpy(gps_time, "000000");
-	strcpy(gps_date, "000000");
-	strcpy(gps_aprs_lat, "0000.00N");
-	strcpy(gps_aprs_lon, "00000.00E");
-	time2lock = 0;
+	// TODO
+	//strcpy(gps_time, "000000");
+	//strcpy(gps_date, "000000");
+	//strcpy(gps_aprs_lat, "0000.00N");
+	//strcpy(gps_aprs_lon, "00000.00E");
+	//time2lock = 0;
 }
 
 
@@ -447,28 +439,29 @@ bool gps_decode(char c)
 			if (num_tokens && our_checksum == their_checksum) {
 				// Return a valid position only when we've got two rmc and gga
 				// messages with the same timestamp.
+
+				uint64_t time = date2UnixTimestamp(
+					newFix.time.year,	// Year
+					newFix.time.month,	// Month
+					newFix.time.day,	// Day
+					newFix.time.hour,	// Hour
+					newFix.time.minute,	// Minute
+					newFix.time.second,	// Second
+					0					// Millisecond
+				);
+
 				switch (sentence_type) {
-					case SENTENCE_UNK:
-						break;    // Keeps gcc happy
+					case SENTENCE_UNK: // Unkown packet type
+						break; // Keeps gcc happy
 					case SENTENCE_GGA:
-						strcpy(gga_time, new_time);
-						gga_sats = new_sats;
+						time_lastGGApacket = time; // Mark timestamp of last GGA packet
+						lastFix.satellites = newFix.satellites;
 						break;
 					case SENTENCE_RMC:
-						strcpy(rmc_time, new_time);
-						strcpy(rmc_date, new_date);
-						uint32_t date = atoi(rmc_date);
-						uint32_t time = atoi(rmc_time);
-						if(date != 0) // If date != 0 then gps has valid time
-							setUnixTimestamp(
-								(date % 100) + 2000,	// Year
-								(date % 10000) / 100,	// Month
-								date / 10000,			// Day
-								time / 10000,			// Hour
-								(time % 10000) / 100,	// Minute
-								time % 100,				// Second
-								0						// Millisecond
-							);
+						time_lastRMCpacket = time; // Mark timestamp of last RMC packet
+						if(newFix.time.year != 0) { // gps has valid time when date != 0
+							//setUnixTimestamp(time); TODO: TMP
+						}
 						break;
 				}
 
@@ -495,24 +488,25 @@ bool gps_decode(char c)
 				//     420 m below sea level. Therefore we define -1000 m as our invalid altitude and
 				//     expect to find an altitude above -420 m when we've decoded a valid GGA statement.
 
-				if (sentence_type != SENTENCE_UNK &&      // Known sentence?
-						strcmp(gga_time, rmc_time) == 0 &&    // RMC/GGA times match?
-						active &&                             // Valid fix?
-						gga_sats > 2 &&                       // 5 sats or more?
-						new_altitude > -1000.0) {             // Valid new altitude?
+				if (sentence_type != SENTENCE_UNK &&				// Known sentence?
+						time_lastRMCpacket == time_lastGGApacket &&	// RMC/GGA times match?
+						newFix.active &&							// Valid fix?
+						newFix.satellites > 2 &&					// 3 sats or more?
+						newFix.altitude > -1000.0) {				// Valid new altitude?
 
-					// Atomically merge data from the two sentences
-					strcpy(gps_time, new_time);
-					strcpy(gps_date, new_date);
-					gps_lat = new_lat;
-					gps_lon = new_lon;
-					strcpy(gps_aprs_lat, new_aprs_lat);
-					strcpy(gps_aprs_lon, new_aprs_lon);
-					gps_course = new_course;
-					gps_speed = new_speed;
-					gps_sats = gga_sats;
-					gps_altitude = new_altitude;
-					new_altitude = -1000.0; // Invalidate new_altitude so that we are sure to get a valid one next time
+//					// Atomically merge data from the two sentences
+//					//strcpy(gps_time, new_time);
+//					//strcpy(gps_date, new_date);
+//					gps_lat = new_lat;
+//					gps_lon = new_lon;
+//					strcpy(gps_aprs_lat, new_aprs_lat);
+//					strcpy(gps_aprs_lon, new_aprs_lon);
+//					gps_course = new_course;
+//					gps_speed = new_speed;
+//					gps_sats = gga_sats;
+//					gps_altitude = new_altitude;
+//					new_altitude = -1000.0; // Invalidate new_altitude so that we are sure to get a valid one next time
+					lastFix = newFix;
 					ret = true;
 				}
 			}
@@ -577,14 +571,14 @@ bool gps_decode(char c)
 uint32_t gps_get_region_frequency()
 {
 	uint32_t frequency = DEFAULT_FREQUENCY;
-	if(-168 < gps_lon && gps_lon < -34) frequency = RADIO_FREQUENCY_REGION2;
-	if(-34 <  gps_lon && gps_lon <  71) frequency = RADIO_FREQUENCY_REGION1;
-	if(-34.95f < gps_lat && gps_lat < 7.18f  && -73.13f < gps_lon && gps_lon < -26.46f) frequency = RADIO_FREQUENCY_BRAZIL;      // Brazil
-	if( 29.38f < gps_lat && gps_lat < 47.10f && 127.16f < gps_lon && gps_lon < 153.61f) frequency = RADIO_FREQUENCY_JAPAN;       // Japan
-	if( 19.06f < gps_lat && gps_lat < 53.74f &&  72.05f < gps_lon && gps_lon < 127.16f) frequency = RADIO_FREQUENCY_CHINA;       // China
-	if( -0.30f < gps_lat && gps_lat < 20.42f &&  93.06f < gps_lon && gps_lon < 105.15f) frequency = RADIO_FREQUENCY_THAILAND;    // Thailand
-	if(-54.54f < gps_lat && gps_lat <-32.43f && 161.62f < gps_lon && gps_lon < 179.99f) frequency = RADIO_FREQUENCY_NEWZEALAND;  // New Zealand
-	if(-50.17f < gps_lat && gps_lat < -8.66f && 105.80f < gps_lon && gps_lon < 161.62f) frequency = RADIO_FREQUENCY_AUSTRALIA;   // Australia
+	if(-168 < lastFix.longitude && lastFix.longitude < -34) frequency = RADIO_FREQUENCY_REGION2;
+	if(-34 <  lastFix.longitude && lastFix.longitude <  71) frequency = RADIO_FREQUENCY_REGION1;
+	if(-34.95f < lastFix.latitude && lastFix.latitude < 7.18f  && -73.13f < lastFix.longitude && lastFix.longitude < -26.46f) frequency = RADIO_FREQUENCY_BRAZIL;      // Brazil
+	if( 29.38f < lastFix.latitude && lastFix.latitude < 47.10f && 127.16f < lastFix.longitude && lastFix.longitude < 153.61f) frequency = RADIO_FREQUENCY_JAPAN;       // Japan
+	if( 19.06f < lastFix.latitude && lastFix.latitude < 53.74f &&  72.05f < lastFix.longitude && lastFix.longitude < 127.16f) frequency = RADIO_FREQUENCY_CHINA;       // China
+	if( -0.30f < lastFix.latitude && lastFix.latitude < 20.42f &&  93.06f < lastFix.longitude && lastFix.longitude < 105.15f) frequency = RADIO_FREQUENCY_THAILAND;    // Thailand
+	if(-54.54f < lastFix.latitude && lastFix.latitude <-32.43f && 161.62f < lastFix.longitude && lastFix.longitude < 179.99f) frequency = RADIO_FREQUENCY_NEWZEALAND;  // New Zealand
+	if(-50.17f < lastFix.latitude && lastFix.latitude < -8.66f && 105.80f < lastFix.longitude && lastFix.longitude < 161.62f) frequency = RADIO_FREQUENCY_AUSTRALIA;   // Australia
 
 	// Note: These regions are a super simplified approach to define rectangles on the world map, representing regions where we may consider at least some
 	// chance that an APRS Digipeter or an Igate is listening. They have absolutely NO political relevance. I was just trying to identify
@@ -596,85 +590,16 @@ uint32_t gps_get_region_frequency()
 	//if(29.7353 < gps_lat && gps_lat < 29.7359 && -95.5397 < gps_lon && gps_lon < -95.5392) frequency = MX146_FREQUENCY_TESTING; // Gessner BBQ
 
 	// Note: Never define a region that spans the date line! Use two regions instead.
-	if(gps_lat == 0 && gps_lon == 0) frequency = DEFAULT_FREQUENCY; // switch to default when we don't have a GPS lease
+
+	// switch to default when we don't have a GPS lease
+	if(lastFix.latitude == 0 && lastFix.longitude == 0) frequency = DEFAULT_FREQUENCY; // TODO: This might not work because lastFix is not updated when GPS is lost
 
 	return frequency;
 }
 
-//bool gps_check_satellite()
-//{
-//	//int16_t latdiff; // unused
-//	//int16_t londiff; // unused
-//
-//	int32_t igpsdate = atol(gps_date);
-//	int32_t igpstime = atol(gps_time);
-//
-//	int16_t gpstime_day     =        igpsdate / 10000;
-//	//int16_t gpstime_month   =        (igpsdate % 10000) / 100; // unused
-//	//int16_t gpstime_year    =        (igpsdate % 10000) % 100 + 2000; // unused
-//	int16_t gpstime_hour    =        igpstime / 10000;
-//	int16_t gpstime_minute  =        (igpstime % 10000) / 100;
-//	//int16_t gpstime_second  =        (igpstime % 10000) % 100; // unused
-//
-//	// The start time must match with the dataset above!
-//	int32_t gpslaunchminutes = (gpstime_day - 19 ) * 1440 + (gpstime_hour - 0) * 60 + gpstime_minute - 0;
-//
-//	// look 2 minutes into the future so that you see the constellation for the next TX cycle
-//	gpslaunchminutes += 2;
-//
-//	// make sure we're in the bounds of the array.
-//	if ((gpslaunchminutes < 0) || (gpslaunchminutes > ISSData_Length)) // make sure we're in the bounds of the array.
-//	{
-//		gpslaunchminutes = 0;
-//	}
-//
-//	iss_datapoint = ISSData[gpslaunchminutes];
-//
-//	// unmerge the datapoint into its components
-//
-//	iss_lat = ((iss_datapoint >> 9) - 64);
-//	iss_lon = ((iss_datapoint & 511) - 180);
-//
-//	//latdiff = abs(iss_lat - (int16_t)gps_lat); // unused
-//	//londiff = abs(iss_lon - (int16_t)gps_lon); // unused
-//
-//	// ISS nearby?
-//	float delLat = abs(iss_lat-gps_lat)*111194.9;
-//	float delLong = 111194.9*abs(iss_lon-gps_lon)*cos((iss_lat+gps_lat)*PI/360);
-//	float distance = sqrt(pow(delLat,2)+pow(delLong,2))/1000.0; // Distance between balloon and ISS in km (on the surface of the earth)
-//
-//	satInView = distance < ISS_FOOTPRINT_RADIUS;
-//	return satInView;
-//}
-
-float gps_get_lat()
-{
-	return gps_lat;
-}
-
-float gps_get_lon()
-{
-	return gps_lon;
-}
-
-float gps_get_altitude()
-{
-	return gps_altitude;
-}
-
-int32_t gps_get_time()
-{
-	return atol(gps_time);
-}
-
-int32_t gps_get_date()
-{
-	return atol(gps_date);
-}
-
 void gpsSetTime2lock(uint32_t ms)
 {
-	time2lock = ms/1000 < 255 ? ms/1000 : 255;
+	lastFix.time2lock = ms/1000 < 255 ? ms/1000 : 255;
 }
 
 void gps_reset(void) {

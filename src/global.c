@@ -25,8 +25,8 @@ void SysTick_Handler(void) {
  * @param second Current Second
  * @param millisecond Current Millisecond
  */
-void setUnixTimestamp(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint16_t millisecond) {
-	uint64_t time;
+uint64_t date2UnixTimestamp(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint16_t millisecond) {
+	uint64_t time = 0;
 	time  = second;
 	time += minute * 60;
 	time += hour * 3600;
@@ -47,7 +47,7 @@ void setUnixTimestamp(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, u
 		}
 	}
 
-	unixTimeStamp = time * 1000 + millisecond;
+	return time * 1000 + millisecond;
 }
 
 date_t getUnixTimestampDecoded(void) {
@@ -84,6 +84,14 @@ date_t getUnixTimestampDecoded(void) {
  */
 uint64_t getUnixTimestamp(void) {
 	return unixTimeStamp;
+}
+
+/**
+ * @brief Set unix timestamp
+ * @param time UNIX time in ms
+ */
+void setUnixTimeStamp(uint64_t time) {
+	unixTimeStamp = time;
 }
 
 /**

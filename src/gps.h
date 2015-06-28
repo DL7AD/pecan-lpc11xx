@@ -19,30 +19,23 @@
 #define __GPS_H__
 
 #include "types.h"
+#include "global.h"
 
-extern char gps_time[8];       // HHMMSS
-extern char gps_date[7];       // DDMMYY
-extern int16_t gps_sats;
-extern float gps_lat;
-extern float gps_lon;
-extern char gps_aprs_lat[10];
-extern char gps_aprs_lon[11];
+typedef struct {
+	date_t time;
+	float latitude;
+	float longitude;
+	uint16_t altitude;
+	uint8_t satellites;
+	uint16_t speed;
+	uint16_t course;
+	bool active;
+	uint8_t time2lock;
+} gps_t;
+
 extern uint32_t gps_region_frequency;
-extern uint32_t doppler_frequency;
-extern bool satInView;
-extern float gps_course;
-extern float gps_speed;
-extern float gps_altitude;
-extern float gps_get_lat();
-extern float gps_get_lon();
-extern float gps_get_altitude();
-extern int32_t gps_get_time();
-extern int32_t gps_get_date();
-extern int16_t iss_lat;
-extern int16_t iss_lon;
-extern uint16_t iss_datapoint;
 extern uint8_t time2lock;
-extern bool newPositionStillUnknown;
+extern gps_t lastFix;
 
 void GPS_Init();
 void gps_reset(void);
