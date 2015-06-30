@@ -34,10 +34,6 @@
 static uint16_t telemetry_counter = 0;
 static uint16_t loss_of_gps_counter = 0;
 
-//char gps_aprs_lat_old[]	= "0000.00N";
-//char gps_aprs_lon_old[]	= "00000.00W";
-//char gps_time_old[]		= "000000";
-
 // changed from const  
 s_address_t addresses[] =
 { 
@@ -53,10 +49,9 @@ s_address_t addresses[] =
 
 
 // Module functions
-float meters_to_feet(float m)
+uint32_t meters_to_feet(uint32_t m)
 {
-	// 10000 ft = 3048 m
-	return m / 0.3048;
+	return (m*26876) / 8192;
 }
 
 uint32_t addtime(uint32_t original, uint32_t seconds2add)
@@ -119,7 +114,7 @@ void transmit_telemetry(void)
 
 
 	// fill the 3rd telemetry value with a number that's proportional to the altitude:
-	nsprintf(temp, 4, "%03d", (int32_t)abs((meters_to_feet(lastFix.altitude) + 0.5)/1000L)); // Altitude in kfeet; Must be > 0, therefore abs()
+	nsprintf(temp, 4, "%03d", meters_to_feet(lastFix.altitude)/1000); // Altitude in kfeet; Must be > 0, therefore abs()
 	ax25_send_string(temp);               // write 8 bit value
 	ax25_send_byte(',');
 
@@ -225,15 +220,9 @@ void transmit_position(gpsstate_t gpsstate)
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
 	ax25_send_byte('/');                // Report w/ timestamp, no APRS messaging. $ = NMEA raw data
 
-	date_t date;
 	if(gpsstate != GPS_LOCK)
 	{
-		//use the old position with new timestamp
-//		strcpy(gps_aprs_lat, gps_aprs_lat_old);
-//		strcpy(gps_aprs_lon, gps_aprs_lon_old);
 		lastFix.time = getUnixTimestampDecoded(); // Replace old GPS timestamp with current time
-	} else {
-		//date = getUnixTimestampDecoded(); // TODO: Change this timestamp to the pointer when the GPS sample has been actually received
 	}
 
 	nsprintf(temp, 7, "%06d", lastFix.time.hour, lastFix.time.minute, lastFix.time.second);
@@ -260,7 +249,7 @@ void transmit_position(gpsstate_t gpsstate)
 	nsprintf(temp, 4, "%03d", lastFix.speed);
 	ax25_send_string(temp);             // speed (knots)
 	ax25_send_string("/A=");            // Altitude (feet). Goes anywhere in the comment area
-	nsprintf(temp, 7, "%06ld", (int32_t)abs((meters_to_feet(lastFix.altitude) + 0.5)));
+	nsprintf(temp, 7, "%06ld", meters_to_feet(lastFix.altitude));
 	ax25_send_string(temp);
 	ax25_send_string(" ");
     
@@ -348,10 +337,6 @@ void transmit_position(gpsstate_t gpsstate)
 
 	// Transmit
 	ax25_flush_frame();
-
-//	strcpy(gps_aprs_lat_old, gps_aprs_lat);
-//	strcpy(gps_aprs_lon_old, gps_aprs_lon);
-//	strcpy(gps_time_old, gps_time);
 }
 
 void configure_transmitter(void)
