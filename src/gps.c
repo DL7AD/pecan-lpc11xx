@@ -271,7 +271,7 @@ void parse_status(const char *token)
 
 void parse_lat(const char *token)
 {
-	// Parses latitude in the format "DD" + "MM" (+ ".M{...}M")
+	// Parses latitude in the format DDMM.MMMMM
 	char degs[3];
 	char mins[3];
 	if (strlen(token) >= 4) {
@@ -281,7 +281,7 @@ void parse_lat(const char *token)
 		mins[0] = token[2];
 		mins[1] = token[3];
 		mins[2] = '\0';
-		newFix.latitude = atoi(degs) + atoi(mins) / 60.0 + atoi(token + 5) / 3600.0;
+		newFix.latitude = atoi(degs) + atoi(mins) / (double)60 + atoi(token + 5) / (double)6000000;
 	}
 }
 
@@ -293,7 +293,7 @@ void parse_lat_hemi(const char *token)
 
 void parse_lon(const char *token)
 {
-	// Longitude is in the format "DDD" + "MM" (+ ".M{...}M")
+	// Longitude is in the format DDDMM.MMMMM
 	char degs[4];
 	char mins[3];
 	if(strlen(token) >= 5) {
@@ -304,7 +304,7 @@ void parse_lon(const char *token)
 		mins[0] = token[3];
 		mins[1] = token[4];
 		mins[2] = '\0';
-		newFix.longitude = atoi(degs) + atoi(mins) / 60.0 + atoi(token + 6) / 3600.0;
+		newFix.longitude = atoi(degs) + atoi(mins) / (double)60 + atoi(token + 6) / (double)6000000;
 	}
 }
 
