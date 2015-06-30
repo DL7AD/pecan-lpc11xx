@@ -242,15 +242,15 @@ void transmit_position(gpsstate_t gpsstate)
 	uint16_t lat_degree = abs((int16_t)lastFix.latitude);
 	uint32_t lat_decimal = abs((int32_t)(lastFix.latitude*100000))%100000;
 	uint8_t lat_minute = lat_decimal * 6 / 10000;
-	uint8_t lat_second = (lat_decimal * 36 / 1000) % 60;
-	nsprintf(temp, 8, "%02d%02d.%02d", lat_degree, lat_minute, lat_second);
+	uint8_t lat_minute_dec = (lat_decimal * 6 / 100) % 100;
+	nsprintf(temp, 9, "%02d%02d.%02d%c", lat_degree, lat_minute, lat_minute_dec, lastFix.latitude>0 ? 'N' : 'S');
 	ax25_send_string(temp);     // Lat: 38deg and 22.20 min (.20 are NOT seconds, but 1/100th of minutes)
 	ax25_send_byte(APRS_SYMBOL_TABLE);                // Symbol table
-	uint16_t lon_degree = abs((int16_t)lastFix.latitude);
-	uint32_t lon_decimal = abs((int32_t)(lastFix.latitude*100000))%100000;
+	uint16_t lon_degree = abs((int16_t)lastFix.longitude);
+	uint32_t lon_decimal = abs((int32_t)(lastFix.longitude*100000))%100000;
 	uint8_t lon_minute = lon_decimal * 6 / 10000;
-	uint8_t lon_second = (lon_decimal * 36 / 1000) % 60;
-	nsprintf(temp, 9, "%03d%02d.%02d", lon_degree, lon_minute, lon_second);
+	uint8_t lon_minute_dec = (lon_decimal * 6 / 100) % 100;
+	nsprintf(temp, 10, "%03d%02d.%02d%c", lon_degree, lon_minute, lon_minute_dec, lastFix.longitude>0 ? 'E' : 'W');
 
 	ax25_send_string(temp);     // Lon: 000deg and 25.80 min
 	ax25_send_byte(APRS_SYMBOL_ID);                // Symbol: /O=balloon, /-=QTH, \N=buoy
@@ -324,15 +324,15 @@ void transmit_position(gpsstate_t gpsstate)
 	}
 
 	nsprintf(
-		temp, 22, "%c%02d%c%02d'%02d\"%c%03d%c%02d'%02d\"",
+		temp, 22, "%c%02d%c%02d.%02d'%c%03d%c%02d.%02d'",
 		(lastFix.longitude < 0 ? 'S' : 'N'),
-		lat_degree, 0xF8, lat_minute, lat_second,
+		lat_degree, 0xF8, lat_minute, lat_minute_dec,
 		(lastFix.latitude < 0 ? 'W' : 'E'),
-		lon_degree, 0xF8, lon_minute, lon_second
+		lon_degree, 0xF8, lon_minute, lon_minute_dec
 	);
 	terminal_addLine(temp);
 
-	nsprintf(temp, 22, "TIM %02d-%02d-%02d %02d:%02d:%02d", date.year%100, date.month, date.day, date.hour, date.minute, date.second);
+	nsprintf(temp, 22, "TIM %02d-%02d-%02d %02d:%02d:%02d", lastFix.time.year%100, lastFix.time.month, lastFix.time.day, lastFix.time.hour, lastFix.time.minute, lastFix.time.second);
 	terminal_addLine(temp);
 
 	nsprintf(temp, 22, "ALT%6d m   SATS %d", lastFix.altitude, lastFix.satellites);
