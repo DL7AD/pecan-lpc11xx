@@ -212,7 +212,9 @@ void transmit_position(gpsstate_t gpsstate)
 
 	ADC_Init();
 	uint16_t battery = getBatteryMV();
+	#ifdef SOLAR_AVAIL
 	uint16_t solar = getSolarMV();
+	#endif
 	ADC_DeInit();
 
 	configure_transmitter();
@@ -330,8 +332,10 @@ void transmit_position(gpsstate_t gpsstate)
 	nsprintf(temp, 22, "BAT%5d mV%7d %cC", battery, bmp180temp, (char)0xF8);
 	terminal_addLine(temp);
 
+	#ifdef SOLAR_AVAIL
 	nsprintf(temp, 22, "SOL%5d mV%7d Pa", solar, bmp180pressure);
 	terminal_addLine(temp);
+	#endif
 
 	terminal_flush();
 

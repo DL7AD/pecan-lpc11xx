@@ -23,6 +23,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef EXT_PIN_AVAIL
+
 uint8_t poledbuff[1024]; // Bitmap buffer
 char textbuffer[7][22]; // Terminal buffer
 
@@ -270,3 +272,21 @@ void terminal_clear(void)
 	for(i=0; i<7; i++)
 		terminal_addLine("");
 }
+
+#else
+
+// Dummy functions to keep gcc happy
+void Init_SSD1306(void) {}
+void i2c_write_byte(bool send_start, bool send_stop, uint8_t byte) {}
+void i2c_send_bytes_list(uint8_t len, uint8_t* bytes) {}
+void i2c_send_command_1byte(uint8_t b1) {}
+void i2c_send_command_2bytes(uint8_t b1, uint8_t b2) {}
+void i2c_send_command_3bytes(uint8_t b1, uint8_t b2, uint8_t b3) {}
+void ssd1306_drawPixel(uint8_t x, uint8_t y, bool color) {}
+void ssd1306_flush(void) {}
+void ssd1306_drawChar(int16_t x, int16_t y, char c, uint16_t color, uint16_t bg) {}
+void terminal_flush(void) {}
+void terminal_addLine(char* line) {}
+void terminal_clear(void) {}
+
+#endif

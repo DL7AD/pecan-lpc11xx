@@ -61,8 +61,8 @@ bool Si406x_Init(void) {
 	RADIO_SDN_SET(false);								// Radio SDN low (power up transmitter)
 
 	// Measure temperature for determine oscillator frequency
-	BMP180_Init(); // Dont remove this (this is a bugfix) TODO: Find the error why this is needed
-	BMP180_DeInit(); // Dont remove this (this is a bugfix) TODO: Find the error why this is needed
+	// BMP180_Init(); // Dont remove this (this is a bugfix) TODO: Find the error why this is needed
+	// BMP180_DeInit(); // Dont remove this (this is a bugfix) TODO: Find the error why this is needed
 	ADC_Init();
 	uint32_t u = getBatteryMV();
 	ADC_DeInit();

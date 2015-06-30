@@ -4,6 +4,8 @@
 #include "LPC11xx.h"
 #include "config.h"
 
+#ifdef EXT_PIN_AVAIL
+
 #define OUT1_CONF_WRITE() { \
 	LPC_IOCON->EXT_PIO_OUT1	&= ~(0x10); \
 	EXT_GPIO_OUT1->DIR		|= EXT_PIN_OUT1; \
@@ -85,4 +87,5 @@
 		EXT_GPIO_OUT4->DATA &= ~EXT_PIN_OUT4; \
 }
 
+#endif
 #endif

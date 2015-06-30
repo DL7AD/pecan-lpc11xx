@@ -64,7 +64,7 @@
 #define TIME_SLEEP_CYCLE			120000
 #define TIME_MAX_GPS_SEARCH			120000
 
-#define TARGET						TARGET_PECAN_PICO6
+#define TARGET						TARGET_PECAN_FEMTO2_1
 
 // Battery type
 // PRIMARY		LiFeSe2 Power save modes disabled, battery will be used until completely empty
@@ -128,7 +128,7 @@
 	#define RADIO_PIO_GPIO0		PIO1_7
 	#define RADIO_PIN_GPIO0		(1 << 7)
 
-	#define OSC_FREQ			27000000		// Oscillator frequency
+	#define OSC_FREQ(u)			26000000		// Oscillator frequency
 
 	#if BATTERY_TYPE == SECONDARY
 	#error Pecan Femto v2.1 can be only used whith primary batteries
