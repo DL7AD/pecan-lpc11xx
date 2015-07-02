@@ -17,37 +17,31 @@ void SysTick_Handler(void) {
 /**
  * Calculates UNIX timestamp and writes it to internal interrupt controlled RTC.
  * Calculation valid until 2100 due to missing leapyear in 2100.
- * @param year Current Year
- * @param month Current Month
- * @param day Current Day
- * @param hour Current Hour
- * @param minute Current Minute
- * @param second Current Second
- * @param millisecond Current Millisecond
+ * @param time Date to be converted
  */
-uint64_t date2UnixTimestamp(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t second, uint16_t millisecond) {
-	uint64_t time = 0;
-	time  = second;
-	time += minute * 60;
-	time += hour * 3600;
-	time += day * 86400;
+uint64_t date2UnixTimestamp(date_t time) {
+	uint64_t timeC = 0;
+	timeC  = time.second;
+	timeC += time.minute * 60;
+	timeC += time.hour * 3600;
+	timeC += time.day * 86400;
 
-	if(year % 4 == 0) { // is leapyear?
-		time += leapYear[month-1] * 86400;
+	if(time.year % 4 == 0) { // is leapyear?
+		timeC += leapYear[time.month-1] * 86400;
 	} else {
-		time += leapYear[month-1] * 86400;
+		timeC += leapYear[time.month-1] * 86400;
 	}
 
 	uint16_t i;
-	for(i=1970; i<year; i++) {
+	for(i=1970; i<time.year; i++) {
 		if(i % 4 == 0) { // is leapyear?
-			time += 31622400;
+			timeC += 31622400;
 		} else {
-			time += 31536000;
+			timeC += 31536000;
 		}
 	}
 
-	return time * 1000 + millisecond;
+	return timeC * 1000 + time.millisecond;
 }
 
 date_t getUnixTimestampDecoded(void) {
@@ -90,7 +84,7 @@ uint64_t getUnixTimestamp(void) {
  * @brief Set unix timestamp
  * @param time UNIX time in ms
  */
-void setUnixTimeStamp(uint64_t time) {
+void setUnixTimestamp(uint64_t time) {
 	unixTimeStamp = time;
 }
 

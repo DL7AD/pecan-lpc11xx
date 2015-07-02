@@ -47,7 +47,7 @@
 // (read more about digipeating paths here: http://wa8lmf.net/DigiPaths/ )
 // The recommended digi path for a balloon is WIDE2-1 or pathless. The default
 // is to use WIDE2-1. Comment out the following two lines for pathless:
-#define DIGI_PATH1				"WIDE2"
+#define DIGI_PATH1				"WIDE1"
 #define DIGI_PATH1_TTL			1
 //#define DIGI_PATH2				"WIDE1"
 //#define DIGI_PATH2_TTL			1
@@ -64,12 +64,12 @@
 #define TIME_SLEEP_CYCLE			120000
 #define TIME_MAX_GPS_SEARCH			120000
 
-#define TARGET						TARGET_PECAN_FEMTO2_1
+#define TARGET						TARGET_PECAN_PICO6
 
 // Battery type
 // PRIMARY		LiFeSe2 Power save modes disabled, battery will be used until completely empty
 // SECONDARY	LiFePO4 GPS will be kept off below 2700mV, no transmission is made below 2500mV to keep the accumulator healthy
-#define BATTERY_TYPE				PRIMARY
+#define BATTERY_TYPE				SECONDARY
 
 // Frequency (which is used after reset state)
 #define DEFAULT_FREQUENCY			144800000
@@ -79,7 +79,7 @@
 // Radio output power depends on VCC voltage
 // 127 @ VCC=3400mV ~ 100mW
 // 20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER					10
+#define RADIO_POWER					40
 
 
 /* ---------------------------- Target definitions ---------------------------- */
@@ -220,8 +220,8 @@
 	#define GPS_PIN_EN			(1 << 8)
 
 	// Thomas DL4MDW and me DL7AD are using two different oscillators
-	//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
-	#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
+	#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
+	//#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
 #else
 	#error No/incorrect target selected
 #endif

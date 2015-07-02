@@ -440,28 +440,19 @@ bool gps_decode(char c)
 				// Return a valid position only when we've got two rmc and gga
 				// messages with the same timestamp.
 
-				uint64_t time = date2UnixTimestamp(
-					newFix.time.year,	// Year
-					newFix.time.month,	// Month
-					newFix.time.day,	// Day
-					newFix.time.hour,	// Hour
-					newFix.time.minute,	// Minute
-					newFix.time.second,	// Second
-					0					// Millisecond
-				);
+				uint64_t time = date2UnixTimestamp(newFix.time);
 
 				switch (sentence_type) {
 					case SENTENCE_UNK: // Unkown packet type
 						break; // Keeps gcc happy
 					case SENTENCE_GGA:
-						time_lastGGApacket = time; // Mark timestamp of last GGA packet
+						time_lastGGApacket = (time/1000) % 86400; // Mark timestamp of last GGA packet
 						lastFix.satellites = newFix.satellites;
 						break;
 					case SENTENCE_RMC:
-						time_lastRMCpacket = time; // Mark timestamp of last RMC packet
-						if(newFix.time.year != 0) { // gps has valid time when date != 0
-							//setUnixTimestamp(time); TODO: TMP
-						}
+						time_lastRMCpacket = (time/1000) % 86400; // Mark timestamp of last RMC packet
+						if(newFix.time.year != 0) // gps has valid time when date != 0
+							setUnixTimestamp(time);
 						break;
 				}
 
