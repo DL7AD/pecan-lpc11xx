@@ -29,7 +29,7 @@ uint64_t date2UnixTimestamp(date_t time) {
 	if(time.year % 4 == 0) { // is leapyear?
 		timeC += leapYear[time.month-1] * 86400;
 	} else {
-		timeC += leapYear[time.month-1] * 86400;
+		timeC += nonLeapYear[time.month-1] * 86400;
 	}
 
 	uint16_t i;
