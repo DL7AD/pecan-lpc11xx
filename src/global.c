@@ -3,8 +3,8 @@
 #include "types.h"
 
 int64_t unixTimeStamp = 0; // UNIX timestamp in milliseconds
-const uint16_t nonLeapYear[] = {0,31,59,89,120,151,181,212,243,273,304,334};
-const uint16_t leapYear[] = {0,31,58,88,119,150,180,211,242,272,303,333};
+const uint16_t nonLeapYear[] = {0,31,59,90,120,151,181,212,243,273,304,334};
+const uint16_t leapYear[] = {0,31,60,91,121,152,182,213,244,274,305,335};
 
 /**
  * @brief Interrupt routine for SystemTick
@@ -24,7 +24,7 @@ uint64_t date2UnixTimestamp(date_t time) {
 	timeC  = time.second;
 	timeC += time.minute * 60;
 	timeC += time.hour * 3600;
-	timeC += time.day * 86400;
+	timeC += (time.day-1) * 86400;
 
 	if(time.year % 4 == 0) { // is leapyear?
 		timeC += leapYear[time.month-1] * 86400;
