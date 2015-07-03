@@ -227,7 +227,7 @@ void transmit_position(gpsstate_t gpsstate)
 		lastFix.time = getUnixTimestampDecoded(); // Replace old GPS timestamp with current time
 	}
 
-	nsprintf(temp, 7, "%06d", lastFix.time.hour, lastFix.time.minute, lastFix.time.second);
+	nsprintf(temp, 7, "%02d%02d%02d", lastFix.time.hour, lastFix.time.minute, lastFix.time.second);
 	ax25_send_string(temp);         // 170915 = 17h:09m:15s zulu (not allowed in Status Reports)
 	ax25_send_byte('h');
 	uint16_t lat_degree = abs((int16_t)lastFix.latitude);
