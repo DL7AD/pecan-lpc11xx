@@ -182,32 +182,6 @@ static unsigned char their_checksum = 0;
 static char token[16];
 static int16_t num_tokens = 0;
 static uint16_t offset = 0;
-//static bool active = false;
-//static char gga_time[7], rmc_time[7], rmc_date[7];
-//static char new_time[7], new_date[7];
-//static int16_t new_sats, gga_sats;
-//static float new_lat;
-//static float new_lon;
-//static char new_aprs_lat[9];
-//static char new_aprs_lon[10];
-//static float new_course;
-//static float new_speed;
-//static float new_altitude;
-
-// Public (extern) variables, readable from other modules
-//char gps_time[8];       // HHMMSS
-//char gps_date[7];       // DDMMYY
-//int16_t gps_sats = 0;
-//float gps_lat = 0;
-//float gps_lon = 0;
-//char gps_aprs_lat[10];
-//char gps_aprs_lon[11];
-//float gps_course = 0;
-//float gps_speed = 0;
-//float gps_altitude = -1000.0; //The dead sea at -420 m is theoretically the deepest usable spot on earth where you could use a GPS
-//                              //Here we define -1000 m as our invalid gps altitude
-//uint8_t time2lock;
-
 bool isOn = false;
 
 // Module functions
@@ -349,13 +323,11 @@ void GPS_Init() {
 }
 
 void GPS_PowerOn(void) {
-	gps_resetBuffer();					// Reset GPS buffer
 	gps_hw_switch(true);				// Power up GPS
 	gps_sw_switch(true);				// Switch on GPS
 
 	gps_setNavigationMode();			// Set navigation mode
 	gps_setNMEAstrings();				// Switch off unnecessary NMES strings
-	//gps_setMaxPerformance();
 
 	isOn = true;
 }
@@ -416,17 +388,6 @@ void gps_setNMEAstrings() {
 		UART_TransmitChar(message5[i]);
 }
 
-void gps_resetBuffer()
-{
-	// TODO
-	//strcpy(gps_time, "000000");
-	//strcpy(gps_date, "000000");
-	//strcpy(gps_aprs_lat, "0000.00N");
-	//strcpy(gps_aprs_lon, "00000.00E");
-	//time2lock = 0;
-}
-
-
 bool gps_decode(char c)
 {
 	int16_t ret = false;
@@ -485,18 +446,7 @@ bool gps_decode(char c)
 						newFix.satellites > 2 &&					// 3 sats or more?
 						newFix.altitude > -1000.0) {				// Valid new altitude?
 
-//					// Atomically merge data from the two sentences
-//					//strcpy(gps_time, new_time);
-//					//strcpy(gps_date, new_date);
-//					gps_lat = new_lat;
-//					gps_lon = new_lon;
-//					strcpy(gps_aprs_lat, new_aprs_lat);
-//					strcpy(gps_aprs_lon, new_aprs_lon);
-//					gps_course = new_course;
-//					gps_speed = new_speed;
-//					gps_sats = gga_sats;
-//					gps_altitude = new_altitude;
-//					new_altitude = -1000.0; // Invalidate new_altitude so that we are sure to get a valid one next time
+					// Atomically merge data from the two sentences
 					lastFix = newFix;
 					ret = true;
 				}
