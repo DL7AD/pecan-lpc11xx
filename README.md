@@ -13,6 +13,7 @@ Todo:
   * Accurate geofencing for frequency switching
   * Evaluation whether ublox MAX8 works at >12,000m altitude or not
   * GPS jump filter
+  * Full tracker reset when GPS lost
 
 Versions
   * v0.1 has been used for one Balloon (Qualatex Floater at 7000m), sometimes it didn't transmit for several minutes (up to one hour) but started again (could be caused by inaccurate frequency [shifting] or software bug)
