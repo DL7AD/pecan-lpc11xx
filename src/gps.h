@@ -38,23 +38,20 @@ extern uint8_t time2lock;
 extern gps_t lastFix;
 
 void GPS_Init();
-void gps_reset(void);
-void gps_setMaxPerformance();
-void gps_setPowerSaveMode();
-void gpsSetTime2lock(uint32_t ms);
-
+void GPS_PowerOff(void);
+void GPS_PowerOn(void);
+void gps_set_nmeaCompatibility();
+void gps_set_gps_only();
+void gps_set_airborne_model();
+void gps_configure_power_save();
+void gps_activate_power_save();
+void gps_disable_power_save();
+void gps_configureActiveNMEASentences();
 bool gps_decode(char c);
 uint32_t gps_get_region_frequency();
-bool gps_check_satellite();
-void gps_resetBuffer(void);
-void gps_setNavigationMode(void);
-void gps_setNMEAstrings();
-
+void gpsSetTime2lock(uint32_t ms);
+void gps_reset(void);
 void gps_hw_switch(bool pos);
-void gps_sw_switch(bool pos);
 bool gpsIsOn(void);
-
-void GPS_PowerOn(void);
-void GPS_PowerOff(void);
 
 #endif

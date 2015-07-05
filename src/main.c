@@ -108,7 +108,8 @@ int main(void)
 				}
 
 				// Switch on GPS if switched off
-				GPS_Init();
+				if(!gpsIsOn())
+					GPS_Init();
 
 				timestampPointer = getUnixTimestamp(); // Mark timestamp for search_gps routine
 				trackingstate = SEARCH_GPS;
@@ -128,7 +129,7 @@ int main(void)
 					while(UART_ReceiveChar(&c)) {
 						if(gps_decode(c)) {
 							// Switch off GPS
-							GPS_PowerOff();
+							// GPS_PowerOff();
 
 							// We have received and decoded our location
 							gpsSetTime2lock(getUnixTimestamp() - timestampPointer);
@@ -148,6 +149,9 @@ int main(void)
 				break;
 
 			case TRANSMIT:
+				// Mark timestamp for sleep routine (which will probably follow after this state)
+				timestampPointer = getUnixTimestamp();
+
 				// Transmit APRS telemetry
 				transmit_telemetry();
 
@@ -159,7 +163,6 @@ int main(void)
 
 				// Change state depending on GPS status
 				if(gpsstate == GPS_LOCK || gpsstate == GPS_LOW_BATT) {
-					timestampPointer = getUnixTimestamp(); // Mark timestamp for sleep routine
 					trackingstate = SLEEP;
 				} else { // GPS_LOSS
 					trackingstate = SWITCH_ON_GPS;

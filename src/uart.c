@@ -173,6 +173,8 @@ bool UART_TransmitChar(uint8_t Data) {
 	UART_START_TX();
 	ExitCritical();
 
+	__WFI(); // Todo: If this function is called quickly multiple times, the UART is not transmitted the right way, __WFI is just a quick workaround but no real solution
+
 	return result;
 }
 /**

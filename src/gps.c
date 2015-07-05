@@ -101,6 +101,71 @@
 	0x1F, 0xAD \
 }
 
+
+
+
+
+
+#define NEW_GPS_ONLY { \
+	0xB5, 0x62, 0x06, 0x3E, 36, 0x00,			/* UBX-CFG-GNSS */ \
+	0x00, 32, 32, 4,							/* use 32 channels, 4 configs following */ \
+	0x00, 16, 32, 0, 0x01, 0x00, 0x00, 0x00,	/* GPS enable, all channels */ \
+	0x03, 0, 0, 0, 0x00, 0x00, 0x00, 0x00,		/* BeiDou disable, 0 channels */ \
+	0x05, 0, 0, 0, 0x00, 0x00, 0x00, 0x00,		/* QZSS disable, 0 channels */ \
+	0x06, 0, 0, 0, 0x00, 0x00, 0x00, 0x00,		/* GLONASS disable, 0 channels */ \
+	0xeb, 0x72									/* checksum */ \
+}
+#define NEW_SET_NMEA { \
+	0xB5, 0x62, 0x06, 0x17, 20, 0x00,			/* UBX-CFG-NMEA */ \
+	0x00, 0x21, 0x08, 0x05,						/* no filter, NMEA v2.1, 8SV, NMEA compat & 82limit */ \
+	0x00, 0x00, 0x00, 0x00,						/* no GNSS to filter */ \
+	0x00, 0x01, 0x00, 0x01,						/* strict SV, main talker = GP, GSV main id, v1 */ \
+	0x00, 0x00, 0x00, 0x00,						/* beidou talker default, reserved */ \
+	0x00, 0x00, 0x00, 0x00,						/* reserved */ \
+	0x61, 0xc5									/* checksum */ \
+}
+#define NEW_AIRBORNE_MODEL { \
+	0xB5, 0x62, 0x06, 0x24, 0x24, 0x00, 0xFF, 0xFF, 0x06, \
+	0x03, 0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 0x00, 0x00, \
+	0x05, 0x00, 0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C, \
+	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0xDC \
+}
+#define NEW_CONFIGURE_POWERSAVE { \
+	0xB5, 0x62, 0x06, 0x3B, 44, 0,		/* UBX-CFG-PM2 */ \
+	0x01, 0x00, 0x00, 0x00,			 	/* v1, reserved 1..3 */ \
+	0x00, 0b00010000, 0b00000010, 0x00,	/* cyclic tracking, update ephemeris */ \
+	0x10, 0x27, 0x00, 0x00,				/* update period, ms */ \
+	0x10, 0x27, 0x00, 0x00,				/* search period, ms */ \
+	0x00, 0x00, 0x00, 0x00,				/* grid offset */ \
+	0x00, 0x00,							/* on-time after first fix */ \
+	0x01, 0x00,							/* minimum acquisition time */ \
+	0x00, 0x00, 0x00, 0x00,				/* reserved 4,5 */ \
+	0x00, 0x00, 0x00, 0x00,				/* reserved 6 */ \
+	0x00, 0x00, 0x00, 0x00,				/* reserved 7 */ \
+	0x00, 0x00, 0x00, 0x00,				/* reserved 8,9,10 */ \
+	0x00, 0x00, 0x00, 0x00,				/* reserved 11 */ \
+	0xef, 0x29							/* checksum */ \
+}
+#define NEW_SWITCH_POWERSAVE_ON { \
+	0xB5, 0x62, 0x06, 0x11, 2, 0,		/* UBX-CFG-RXM */ \
+	0x08, 0x01,							/* reserved, enable power save mode */ \
+	0x22, 0x92							/* checksum */ \
+}
+#define NEW_SWITCH_POWERSAVE_OFF { \
+	0xB5, 0x62, 0x06, 0x11, 2, 0,		/* UBX-CFG-RXM */ \
+	0x08, 0x00,							/* reserved, disable power save mode */ \
+	0x21, 0x91							/* checksum */ \
+}
+#define NEW_SAVE_SETTINGS() { \
+	0xB5, 0x62, 0x06, 0x09, 12, 0,		/* UBX-CFG-CFG */ \
+	0x00, 0x00, 0x00, 0x00,				/* clear no sections */ \
+	0x1f, 0x1e, 0x00, 0x00,				/* save all sections */ \
+	0x00, 0x00, 0x00, 0x00,				/* load no sections */ \
+	0x58, 0x59							/* checksum */ \
+}
+
+
 // Module declarations
 static void parse_sentence_type(const char * token);
 static void parse_time(const char *token);
@@ -319,56 +384,80 @@ void GPS_Init() {
 	UART_Init(GPS_BAUDRATE);				// Init UART
 
 	GPS_PowerOn();
-	gps_setMaxPerformance();
-}
-
-void GPS_PowerOn(void) {
-	gps_hw_switch(true);				// Power up GPS
-	gps_sw_switch(true);				// Switch on GPS
-
-	gps_setNavigationMode();			// Set navigation mode
-	gps_setNMEAstrings();				// Switch off unnecessary NMES strings
-
-	isOn = true;
 }
 
 void GPS_PowerOff(void) {
-	gps_sw_switch(false);				// Switch off GPS
 	gps_hw_switch(false);				// Power down GPS
 	UART_DeInit();						// Power off UART
 
 	isOn = false;
 }
 
-void gps_setMaxPerformance()
+void GPS_PowerOn(void) {
+	gps_hw_switch(true);				// Power up GPS
+	delay(5000);						// Just to be sure GPS has booted completely
+
+	gps_set_nmeaCompatibility(); // fertig
+	gps_set_gps_only(); // fertig
+	//gps_configureActiveNMEASentences(); // fertig
+	gps_set_airborne_model(); // fertig
+	gps_configure_power_save(); // fertig
+	gps_disable_power_save(); // fertig
+	delay(600000);
+	gps_activate_power_save(); // fertig
+
+	isOn = true;
+}
+
+void gps_set_nmeaCompatibility() // fertig
 {
 	uint8_t i;
-	uint8_t message[] = UBX_SETMAXPERFORMANCE;
+	uint8_t message[] = NEW_SET_NMEA;
 	for(i=0; i<sizeof(message); i++)
 		UART_TransmitChar(message[i]);
 }
 
-void gps_setPowerSaveMode()
+void gps_set_gps_only() // fertig
 {
 	uint8_t i;
-	uint8_t message[] = UBX_SETPOWERSAVEMODE;
-	for(i=0; i<sizeof(message); i++)
-		UART_TransmitChar(message[i]);
-
-	uint8_t message2[] = UBX_SETCYCLICTRACKINGLONG;
-	for(i=0; i<sizeof(message2); i++)
-		UART_TransmitChar(message2[i]);
-}
-
-void gps_setNavigationMode()
-{
-	uint8_t i;
-	uint8_t message[] = UBX_SETNAV;
+	uint8_t message[] = NEW_GPS_ONLY;
 	for(i=0; i<sizeof(message); i++)
 		UART_TransmitChar(message[i]);
 }
 
-void gps_setNMEAstrings() {
+void gps_set_airborne_model() // fertig
+{
+	uint8_t i;
+	uint8_t message[] = NEW_AIRBORNE_MODEL;
+	for(i=0; i<sizeof(message); i++)
+		UART_TransmitChar(message[i]);
+}
+
+void gps_configure_power_save() // fertig
+{
+	uint8_t i;
+	uint8_t message[] = NEW_CONFIGURE_POWERSAVE;
+	for(i=0; i<sizeof(message); i++)
+		UART_TransmitChar(message[i]);
+}
+
+void gps_activate_power_save() // fertig
+{
+	uint8_t i;
+	uint8_t message[] = NEW_SWITCH_POWERSAVE_ON;
+	for(i=0; i<sizeof(message); i++)
+		UART_TransmitChar(message[i]);
+}
+
+void gps_disable_power_save() // fertig
+{
+	uint8_t i;
+	uint8_t message[] = NEW_SWITCH_POWERSAVE_OFF;
+	for(i=0; i<sizeof(message); i++)
+		UART_TransmitChar(message[i]);
+}
+
+void gps_configureActiveNMEASentences() { // fertig
 	uint8_t i;
 
 	uint8_t message2[] = UBX_SETGLLOFF;
@@ -412,7 +501,7 @@ bool gps_decode(char c)
 						break;
 					case SENTENCE_RMC:
 						time_lastRMCpacket = (time/1000) % 86400; // Mark timestamp of last RMC packet
-						if(newFix.time.year != 0) // gps has valid time when date != 0
+						if(newFix.time.year != 2000) // gps has valid time when date != 0
 							setUnixTimestamp(time);
 						break;
 				}
@@ -557,28 +646,6 @@ void gps_reset(void) {
 void gps_hw_switch(bool pos) {
 	#ifdef USE_GPS_HW_SW
 	GPS_EN_SET(!pos);
-	#endif
-}
-
-/**
- * @brief Switches GPS into sleep mode or wakes it up by software
- * @param pos true or false wether gps should be switch on or off
- */
-void gps_sw_switch(bool pos) {
-	#ifdef USE_GPS_SW_SW
-	uint8_t i;
-	if(pos) {
-		uint8_t message[] = UBX_POWERON;
-		for(i=0; i<sizeof(message); i++)
-			UART_TransmitChar(message[i]);
-		uint8_t message2[] = UBX_SETMAXPERFORMANCE;
-		for(i=0; i<sizeof(message2); i++)
-			UART_TransmitChar(message2[i]);
-	} else {
-		uint8_t message[] = UBX_POWEROFF;
-		for(i=0; i<sizeof(message); i++)
-			UART_TransmitChar(message[i]);
-	}
 	#endif
 }
 

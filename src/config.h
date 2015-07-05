@@ -32,7 +32,7 @@
 // - IGate:      5
 //
 #define S_CALLSIGN				"DL7AD"
-#define S_CALLSIGN_ID			11
+#define S_CALLSIGN_ID			12
 
 // Destination callsign: APRS (with SSID=0) is usually okay.
 #define D_CALLSIGN				"APECAN"  // APExxx = Telemetry devices (that's what Pecan actually is)
@@ -220,8 +220,8 @@
 	#define GPS_PIN_EN			(1 << 8)
 
 	// Thomas DL4MDW and me DL7AD are using two different oscillators
-	#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
-	//#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
+	//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
+	#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
 #else
 	#error No/incorrect target selected
 #endif
