@@ -91,6 +91,9 @@ int main(void)
 		switch(trackingstate)
 		{
 			case SLEEP:
+				if(batt_voltage < VOLTAGE_NOGPS && gpsIsOn()) // Tracker has low battery, so switch off GPS
+					GPS_PowerOff();
+
 				if(getUnixTimestamp()-timestampPointer >= TIME_SLEEP_CYCLE) {
 					trackingstate = SWITCH_ON_GPS;
 					continue;
@@ -127,9 +130,12 @@ int main(void)
 				if(gpsIsOn()) {
 					uint8_t c;
 					while(UART_ReceiveChar(&c)) {
-						if(gps_decode(c)) {
-							// Switch off GPS
-							// GPS_PowerOff();
+						if(gps_decode(c)) { // Lock and 5 sats are used
+							#ifdef USE_GPS_POWER_SAVE
+							gps_activate_power_save(); // Activate power save mode
+							#else
+							GPS_PowerOff(); // Switch off GPS
+							#endif
 
 							// We have received and decoded our location
 							gpsSetTime2lock(getUnixTimestamp() - timestampPointer);

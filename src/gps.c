@@ -13,6 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ * MAX7/8 configuration sentences have been taken from thastis
+ * utrak project: https://github.com/thasti/utrak
  */
 
 #include "gps.h"
@@ -229,11 +232,11 @@ unsigned char from_hex(char a)
 
 void parse_sentence_type(const char *token)
 {
-	if (strcmp(token, "$GPGGA") == 0 || strcmp(token, "$GNGGA") == 0) {
+	if (strcmp(token, "$GPGGA") == 0) {
 		sentence_type = SENTENCE_GGA;
-	} else if(strcmp(token, "$GPRMC") == 0 || strcmp(token, "$GNRMC") == 0) {
+	} else if(strcmp(token, "$GPRMC") == 0) {
 		sentence_type = SENTENCE_RMC;
-	} else if(strcmp(token, "$GPUNK") == 0 || strcmp(token, "$GNUNK") == 0) {
+	} else if(strcmp(token, "$GPUNK") == 0) {
 		sentence_type = SENTENCE_UNK;
 	}
 }
@@ -347,39 +350,49 @@ void GPS_Init() {
 	#endif
 
 	UART_Init(GPS_BAUDRATE);				// Init UART
-
-	GPS_PowerOn();
+	GPS_PowerOn();							// Init GPS
 }
 
 void GPS_PowerOff(void) {
-	gps_hw_switch(false);				// Power down GPS
-	UART_DeInit();						// Power off UART
+	#ifdef USE_GPS_HW_SW
+	gps_hw_switch(false);					// Power down GPS
+	#endif
 
+	UART_DeInit();							// Power off UART
 	isOn = false;
 }
 
+/**
+ * Switches GPS on (if MOSFET switch available) and initializes
+ * ublox MAX7/8 GPS receivers:
+ * - Activates NMEA compactibility
+ * - Switches off unnecessary NMEA sentences (only GPRMC and GPGGA are left)
+ * - Activates high altitude support
+ * - Configures power save mode
+ * - Disables power save mode (has to be activated separately)
+ */
 void GPS_PowerOn(void) {
-	gps_hw_switch(true);				// Power up GPS
-	delay(5000);						// Just to be sure GPS has booted completely
+	#ifdef USE_GPS_HW_SW
+	gps_hw_switch(true);					// Power up GPS
+	delay(1000);							// Just to be sure GPS has booted completely
+	#endif
 
-	gps_set_nmeaCompatibility(); // fertig
-	delay(1000);
-	gps_set_gps_only(); // fertig
-	delay(1000);
-	//gps_configureActiveNMEASentences(); // fertig
-	//delay(1000);
-	gps_set_airborne_model(); // fertig
-	delay(1000);
-	gps_configure_power_save(); // fertig
-	delay(1000);
-	gps_disable_power_save(); // fertig
-	delay(600000);
-	gps_activate_power_save(); // fertig
+	gps_set_nmeaCompatibility();			// Configure compatibility mode, this must be done because the code assumes specific NMEA parameter lengths
+	delay(100);
+	gps_set_gps_only();						// Switch off GLONASS, Baidoo, QZSS, Galileo
+	delay(100);
+	gps_configureActiveNMEASentences();		// Switch off unnecessary NMEA sentences (only GPRMC and GPGGA needed)
+	delay(100);
+	gps_set_airborne_model();				// Switch to airborne model (activates GPS support over 12km altitude)
+	delay(100);
+	gps_configure_power_save();				// Configure power save mode
+	delay(100);
+	gps_disable_power_save();				// Switch off power save mode
 
 	isOn = true;
 }
 
-void gps_set_nmeaCompatibility() // fertig
+void gps_set_nmeaCompatibility()
 {
 	uint8_t i;
 	for(i=0; i<sizeof(UBX_SET_NMEA); i++) {
@@ -388,7 +401,7 @@ void gps_set_nmeaCompatibility() // fertig
 	}
 }
 
-void gps_set_gps_only() // fertig
+void gps_set_gps_only()
 {
 	uint8_t i;
 	for(i=0; i<sizeof(UBX_GPS_ONLY); i++) {
@@ -397,7 +410,7 @@ void gps_set_gps_only() // fertig
 	}
 }
 
-void gps_set_airborne_model() // fertig
+void gps_set_airborne_model()
 {
 	uint8_t i;
 	for(i=0; i<sizeof(UBX_AIRBORNE_MODEL); i++) {
@@ -406,7 +419,7 @@ void gps_set_airborne_model() // fertig
 	}
 }
 
-void gps_configure_power_save() // fertig
+void gps_configure_power_save()
 {
 	uint8_t i;
 	for(i=0; i<sizeof(UBX_CONFIGURE_POWERSAVE); i++) {
@@ -415,7 +428,12 @@ void gps_configure_power_save() // fertig
 	}
 }
 
-void gps_activate_power_save() // fertig
+/**
+ * Activates GPS power save mode.
+ * Note: Powersave mode is only functional if GPS has lock receives
+ * 5 satellites at least!
+ */
+void gps_activate_power_save()
 {
 	uint8_t i;
 	for(i=0; i<sizeof(UBX_SWITCH_POWERSAVE_ON); i++) {
@@ -424,7 +442,7 @@ void gps_activate_power_save() // fertig
 	}
 }
 
-void gps_disable_power_save() // fertig
+void gps_disable_power_save()
 {
 	uint8_t i;
 	for(i=0; i<sizeof(UBX_SWITCH_POWERSAVE_OFF); i++) {
@@ -433,7 +451,7 @@ void gps_disable_power_save() // fertig
 	}
 }
 
-void gps_configureActiveNMEASentences() { // fertig
+void gps_configureActiveNMEASentences() {
 	uint8_t i;
 
 	for(i=0; i<sizeof(UBX_SETGLLOFF); i++) {
@@ -457,6 +475,10 @@ void gps_configureActiveNMEASentences() { // fertig
 	}
 }
 
+/**
+ * Decodes GPS character.
+ * @return True when gps is locked and 5 satellites used
+ */
 bool gps_decode(char c)
 {
 	int16_t ret = false;
@@ -512,12 +534,14 @@ bool gps_decode(char c)
 				if (sentence_type != SENTENCE_UNK &&				// Known sentence?
 						time_lastRMCpacket == time_lastGGApacket &&	// RMC/GGA times match?
 						newFix.active &&							// Valid fix?
-						newFix.satellites > 2 &&					// 3 sats or more?
+						newFix.satellites >= 5 &&					// 5 sats or more?
 						newFix.altitude > -1000.0) {				// Valid new altitude?
 
 					// Atomically merge data from the two sentences
 					lastFix = newFix;
 					ret = true;
+				} else if(sentence_type == SENTENCE_GGA) {
+					lastFix.satellites = newFix.satellites;			// Transmit at least num of sats
 				}
 			}
 

@@ -41,7 +41,7 @@
 // APRS Symbol
 // Consists of Symbol table (/ or \ or a dew overlay symbols) and the symbol ID
 #define APRS_SYMBOL_TABLE		'/' // Default table
-#define APRS_SYMBOL_ID			'O' // /O = Balloon
+#define APRS_SYMBOL_ID			'O' // O = Balloon
 
 // Digipeating paths:
 // (read more about digipeating paths here: http://wa8lmf.net/DigiPaths/ )
@@ -52,10 +52,8 @@
 //#define DIGI_PATH2				"WIDE1"
 //#define DIGI_PATH2_TTL			1
 
-// APRS comment: this goes in the comment portion of the APRS message. You
-// might want to keep this short. The longer the packet, the more vulnerable
-// it is to noise. 
-#define APRS_COMMENT    ""
+// APRS comment (additional static message next to telemetry data)
+#define APRS_COMMENT				""
 
 // TX delay in milliseconds
 #define TX_DELAY					300
@@ -71,15 +69,15 @@
 // SECONDARY	LiFePO4 GPS will be kept off below 2700mV, no transmission is made below 2500mV to keep the accumulator healthy
 #define BATTERY_TYPE				SECONDARY
 
-// Frequency (which is used after reset state)
-#define DEFAULT_FREQUENCY			144800000
-
 // Radio power
 // min. 1, max. 127
 // Radio output power depends on VCC voltage
 // 127 @ VCC=3400mV ~ 100mW
 // 20  @ VCC=3400mV ~ 10mW
 #define RADIO_POWER					40
+
+#define USE_GPS_POWER_SAVE // Uses GPS power save mode, switches GPS on and off by MOSFET if preprocessor not used
+#define OSCILLATOR					_27MHZ
 
 
 /* ---------------------------- Target definitions ---------------------------- */
@@ -128,10 +126,8 @@
 	#define RADIO_PIO_GPIO0		PIO1_7
 	#define RADIO_PIN_GPIO0		(1 << 7)
 
+	#if OSCILLATOR == _26MHZ
 	#define OSC_FREQ(u)			26000000		// Oscillator frequency
-
-	#if BATTERY_TYPE == SECONDARY
-	#error Pecan Femto v2.1 can be only used whith primary batteries
 	#endif
 
 #elif TARGET == TARGET_PECAN_PICO6
@@ -219,15 +215,17 @@
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
 
-	// Thomas DL4MDW and me DL7AD are using two different oscillators
-	//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
+	#if OSCILLATOR == _20MHZ
+	#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
+	#elif OSCILLATOR == _27MHZ
 	#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
+	#endif
 #else
 	#error No/incorrect target selected
 #endif
 
 #if BATTERY_TYPE == SECONDARY
-	#define VOLTAGE_NOGPS		2700			// Don't switch on GPS below this voltage (Telemetry transmission only)
+	#define VOLTAGE_NOGPS		2600			// Don't switch on GPS below this voltage (Telemetry transmission only)
 	#define VOLTAGE_NOTRANSMIT	2500			// Don't transmit below this voltage
 	#define VOLTAGE_GPS_MAXDROP 100				// Max. Battery drop voltage until GPS is switched off while acquisition
 												// Example: VOLTAGE_NOGPS = 2700 & VOLTAGE_GPS_MAXDROP = 100 => GPS will be switched
@@ -243,6 +241,13 @@
 /* ------------------------------ Error messages ------------------------------ */
 /* ----------------------- Please don't touch anything ------------------------ */
 
+#if BATTERY_TYPE == SECONDARY && TARGET == TARGET_PECAN_FEMTO2_1
+#error Pecan Femto v2.1 can be only used whith primary batteries
+#endif
+
+#ifndef OSC_FREQ
+#error No or unknown oscillator configured
+#endif
 
 // TODO: Rewrite configuration validation again and check which checks are missing
 
@@ -274,6 +279,9 @@
 
 /* ---------- Constant definitions (which will never change in life) ---------- */
 /* ----------------------- Please don't touch anything ------------------------ */
+
+// Frequency (which is used after reset state)
+#define DEFAULT_FREQUENCY			144800000
 
 // In other regions the APRS frequencies are different. Our balloon may travel
 // from one region to another, so we may QSY according to GPS defined geographical regions

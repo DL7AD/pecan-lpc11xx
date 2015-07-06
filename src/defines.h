@@ -26,6 +26,10 @@
 #define PRIMARY					7
 #define SECONDARY				8
 
+#define _20MHZ					9
+#define _26MHZ					10
+#define _27MHZ					11
+
 #define AD0						0
 #define AD1						1
 #define AD2						2
