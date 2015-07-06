@@ -283,8 +283,14 @@ void transmit_position(gpsstate_t gpsstate)
 
 	if(gpsstate != GPS_LOCK) {
 		loss_of_gps_counter++;
-		if(loss_of_gps_counter >= 15) { // make sure we don't get above 15
-			loss_of_gps_counter = 0; // will stay at 15 at permanent gps loss. 15 is maximum due to telemetry overflow
+		if(loss_of_gps_counter >= 3) { // GPS lost 3 times (6min if cycle = 2min) TODO: This is actually not a task of APRS encoding
+			loss_of_gps_counter = 0;
+
+			// Reset UART interface
+			GPS_PowerOff();
+			GPS_Init();
+
+			// Reset GPS
 			gps_reset();
 		}
 		ax25_send_string(" GPS loss ");
