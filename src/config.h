@@ -64,11 +64,6 @@
 
 #define TARGET						TARGET_PECAN_PICO6
 
-// Battery type
-// PRIMARY		LiFeSe2 Power save modes disabled, battery will be used until completely empty
-// SECONDARY	LiFePO4 GPS will be kept off below 2700mV, no transmission is made below 2500mV to keep the accumulator healthy
-#define BATTERY_TYPE				SECONDARY
-
 // Radio power
 // min. 1, max. 127
 // Radio output power depends on VCC voltage
@@ -76,20 +71,64 @@
 // 20  @ VCC=3400mV ~ 10mW
 #define RADIO_POWER					40
 
-#define USE_GPS_POWER_SAVE // Uses GPS power save mode, switches GPS on and off by MOSFET if preprocessor not used
-#define OSCILLATOR					_27MHZ
+/* ---------------------------- Target definitions ---------------------------- */
+/* ------- Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ------- */
+#if TARGET == TARGET_PECAN_PICO6
 
+// Power management: Pecan Pico has two options of power management
+// 1. Use hardware switch:	GPS will be switched on by MOSFET each cycle. When GPS has locked (<4Sats, it will be
+//							switched off by MOSFET. GPS will remain switched on when GPS has no lock until it locks
+//							GPS and UART interface will be reset and reinitialized when GPS does not lock for
+//							3 cycles. To use this mode, no preprocessor has to be set.
+// 1. Use GPS power save:	GPS will be switched on permanently and sent into power save mode when GPS has
+//							lock (when <4Sats). GPS and UART interface will be reset and reinitialized when GPS
+//							does not lock for 3 cycles. To use this mode, USE_GPS_POWER_SAVE has to be set.
+
+#define USE_GPS_POWER_SAVE // Uses GPS power save mode, switches GPS on and off by MOSFET if preprocessor not used
+
+// Oscillator frequency:	The oscillator is powered by different VCC levels and different PWM levels. So it has to
+//							be adjusted/stabilized by software depending on voltage.
+
+//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
+#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
+
+// Battery type: Pecan Pico has two options of battery types
+// 1. PRIMARY				LiFeSe2 Power save modes disabled, battery will be used until completely empty
+// 2. SECONDARY				LiFePO4 GPS will be kept off below 2700mV, no transmission is made below 2500mV to keep
+//							the accumulator healthy
+
+#define BATTERY_TYPE		SECONDARY
+
+#endif
+
+/* ---------------------------- Target definitions ---------------------------- */
+/* ------ Pecan Femto 2 specific (applicable only if Pecan Femto 2 used) ------ */
+#if TARGET == TARGET_PECAN_FEMTO2_1
+
+// Power management: Pecan Pico only one option available (because it has no MOSET GPS switch)
+// Use GPS power save:		GPS will be switched on permanently and sent into power save mode when GPS has
+//							lock (when <4Sats). GPS and UART interface will be reset and reinitialized when GPS
+//							does not lock for 3 cycles. 
+
+// Oscillator frequency:	Pecan Femto has a stable oscialltor
+
+#define OSC_FREQ(u)			26000000		// Oscillator frequency
+
+// Battery Type:			Pecan Femto can be only powered by a primary battery (it has no solar charger)
+
+#endif
 
 /* ---------------------------- Target definitions ---------------------------- */
 /* ----------------------- Please don't touch anything ------------------------ */
 
 #if TARGET == TARGET_PECAN_FEMTO2_1
 
-	#define USE_GPS_SW_SW						// GPS software switch activated
+	#define USE_GPS_POWER_SAVE					// Use GPS power save mode (No MOSET switch available)
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
 	#define GPS_BAUDRATE		9600			// Baudrate for ublox MAX7 or MAX8
 	#define ADC_REF				REF_VCC			// ADC reference VCC input
 	#define REF_MV				3300			// Reference voltage in mv
+	#define BATTERY_TYPE		PRIMARY			// Use Primary battery
 
 	#define ADC_PIO_BATT		R_PIO1_2
 	#define ADC_AD_BATT			AD3
@@ -126,13 +165,8 @@
 	#define RADIO_PIO_GPIO0		PIO1_7
 	#define RADIO_PIN_GPIO0		(1 << 7)
 
-	#if OSCILLATOR == _26MHZ
-	#define OSC_FREQ(u)			26000000		// Oscillator frequency
-	#endif
-
 #elif TARGET == TARGET_PECAN_PICO6
 
-	#define USE_GPS_HW_SW						// GPS transistor switch available
 	#define EXT_PIN_AVAIL						// External pins available
 	#define SOLAR_AVAIL							// Solar feed available
 	#define BMP180_AVAIL						// Pressure sensor BMP180 is available
@@ -140,6 +174,10 @@
 	#define VCXO_POWERED_BY_LDO					// VCXO powered by LDO (VCC1V8)
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
 	#define GPS_BAUDRATE		9600			// Baudrate for ublox MAX7 or MAX8
+	
+	#ifndef USE_GPS_POWER_SAVE
+	#define USE_GPS_HW_SW						// Use Hardware switch for GPS power
+	#endif
 
 	#define ADC_REF				REF_VCC1V8_LDO	// ADC reference is 1.8V LDO
 	#define ADC_PIO_REF			R_PIO1_1
@@ -215,11 +253,6 @@
 	#define GPS_PIO_EN			PIO1_8
 	#define GPS_PIN_EN			(1 << 8)
 
-	#if OSCILLATOR == _20MHZ
-	#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
-	#elif OSCILLATOR == _27MHZ
-	#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
-	#endif
 #else
 	#error No/incorrect target selected
 #endif
@@ -241,14 +274,6 @@
 /* ------------------------------ Error messages ------------------------------ */
 /* ----------------------- Please don't touch anything ------------------------ */
 
-#if BATTERY_TYPE == SECONDARY && TARGET == TARGET_PECAN_FEMTO2_1
-#error Pecan Femto v2.1 can be only used whith primary batteries
-#endif
-
-#ifndef OSC_FREQ
-#error No or unknown oscillator configured
-#endif
-
 // TODO: Rewrite configuration validation again and check which checks are missing
 
 
@@ -261,21 +286,6 @@
 #if GPS_BUS == I2C
 	#define USE_I2C
 #endif
-
-
-// Assigning default values if not set
-#ifndef VOLTAGE_NOGPS
-#define VOLTAGE_NOGPS 0
-#endif
-
-#ifndef VOLTAGE_NOTRANSMIT
-#define VOLTAGE_NOTRANSMIT 0
-#endif
-
-#ifndef VOLTAGE_GPS_MAXDROP
-#define VOLTAGE_GPS_MAXDROP 100
-#endif
-
 
 /* ---------- Constant definitions (which will never change in life) ---------- */
 /* ----------------------- Please don't touch anything ------------------------ */
