@@ -276,10 +276,10 @@ void transmit_position(gpsstate_t gpsstate)
 	nsprintf(temp, 3, "%02d", lastFix.satellites);
 	ax25_send_string(temp);
 
-	if(strcmp(APRS_COMMENT, "")) {
-		ax25_send_string(" ");
-		ax25_send_string(APRS_COMMENT);     // Comment
-	}
+	#ifdef APRS_COMMENT
+	ax25_send_string(" ");
+	ax25_send_string(APRS_COMMENT); // Comment
+	#endif
 
 	if(gpsstate != GPS_LOCK) {
 		loss_of_gps_counter++;

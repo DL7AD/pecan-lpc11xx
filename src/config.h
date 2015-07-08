@@ -21,105 +21,87 @@
 #include "defines.h"
 #include "LPC11xx.h"
 
+// Type of Pecan which is used
+// TARGET_PECAN_PICO6
+// TARGET_PECAN_PICO6
+#define TARGET				TARGET_PECAN_PICO6
 
-// Set your callsign and SSID here. Common values for the SSID are
-// (from http://zlhams.wikidot.com/aprs-ssidguide):
-//
-// - Balloons:  11
-// - Cars:       9
-// - Buoy:       8
-// - Home:       0
-// - IGate:      5
-//
-#define S_CALLSIGN				"DL7AD"
-#define S_CALLSIGN_ID			12
-
-// Destination callsign: APRS (with SSID=0) is usually okay.
-#define D_CALLSIGN				"APECAN"  // APExxx = Telemetry devices (that's what Pecan actually is)
-#define D_CALLSIGN_ID			0
+// APRS Source Callsign
+#define S_CALLSIGN			"DL7AD"
+#define S_CALLSIGN_ID		12
 
 // APRS Symbol
-// Consists of Symbol table (/ or \ or a dew overlay symbols) and the symbol ID
-#define APRS_SYMBOL_TABLE		'/' // Default table
-#define APRS_SYMBOL_ID			'O' // O = Balloon
+#define APRS_SYMBOL_TABLE	'/' // Default table
+#define APRS_SYMBOL_ID		'O' // O = Balloon
 
-// Digipeating paths:
-// (read more about digipeating paths here: http://wa8lmf.net/DigiPaths/ )
-// The recommended digi path for a balloon is WIDE2-1 or pathless. The default
-// is to use WIDE2-1. Comment out the following two lines for pathless:
-#define DIGI_PATH1				"WIDE1"
-#define DIGI_PATH1_TTL			1
-//#define DIGI_PATH2				"WIDE1"
-//#define DIGI_PATH2_TTL			1
+// APRS Digipeating paths (comment this out, if not used)
+#define DIGI_PATH1			"WIDE1"
+#define DIGI_PATH1_TTL		1
+//#define DIGI_PATH2		"WIDE1"
+//#define DIGI_PATH2_TTL	1
 
-// APRS comment (additional static message next to telemetry data)
-#define APRS_COMMENT				""
+// APRS comment (comment this out, if not used)
+//#define APRS_COMMENT		"Pecan Tracker"
 
 // TX delay in milliseconds
-#define TX_DELAY					300
+#define TX_DELAY			300
 
 
-#define TIME_SLEEP_CYCLE			120000
-#define TIME_MAX_GPS_SEARCH			120000
+#define TIME_SLEEP_CYCLE	120000
+#define TIME_MAX_GPS_SEARCH	120000
 
-#define TARGET						TARGET_PECAN_PICO6
+// Radio power:				Radio power (for Si4464)
+//							Range 1-127, Radio output power depends on VCC voltage.
+//							127 @ VCC=3400mV ~ 100mW
+//							20  @ VCC=3400mV ~ 10mW
+#define RADIO_POWER			40
 
-// Radio power
-// min. 1, max. 127
-// Radio output power depends on VCC voltage
-// 127 @ VCC=3400mV ~ 100mW
-// 20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER					40
-
-/* ---------------------------- Target definitions ---------------------------- */
-/* ------- Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ------- */
+/* ============================================== Target definitions =============================================== */
+/* ========================= Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ========================== */
 #if TARGET == TARGET_PECAN_PICO6
 
 // Power management: Pecan Pico has two options of power management
 // 1. Use hardware switch:	GPS will be switched on by MOSFET each cycle. When GPS has locked (<4Sats, it will be
 //							switched off by MOSFET. GPS will remain switched on when GPS has no lock until it locks
 //							GPS and UART interface will be reset and reinitialized when GPS does not lock for
-//							3 cycles. To use this mode, no preprocessor has to be set.
+//							3 cycles. To use this mode, comment out USE_GPS_POWER_SAVE.
 // 1. Use GPS power save:	GPS will be switched on permanently and sent into power save mode when GPS has
 //							lock (when <4Sats). GPS and UART interface will be reset and reinitialized when GPS
 //							does not lock for 3 cycles. To use this mode, USE_GPS_POWER_SAVE has to be set.
-
-#define USE_GPS_POWER_SAVE // Uses GPS power save mode, switches GPS on and off by MOSFET if preprocessor not used
-
-// Oscillator frequency:	The oscillator is powered by different VCC levels and different PWM levels. So it has to
-//							be adjusted/stabilized by software depending on voltage.
-
-//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
-#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
+#define USE_GPS_POWER_SAVE
 
 // Battery type: Pecan Pico has two options of battery types
 // 1. PRIMARY				LiFeSe2 Power save modes disabled, battery will be used until completely empty
 // 2. SECONDARY				LiFePO4 GPS will be kept off below 2700mV, no transmission is made below 2500mV to keep
 //							the accumulator healthy
-
 #define BATTERY_TYPE		SECONDARY
+
+// Oscillator frequency:	The oscillator is powered by different VCC levels and different PWM levels. So it has to
+//							be adjusted/stabilized by software depending on voltage. At the moment there are two
+//							different oscillators being used by Thomas (DL4MDW) and Sven (DL7AD)
+//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
+#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
 
 #endif
 
-/* ---------------------------- Target definitions ---------------------------- */
-/* ------ Pecan Femto 2 specific (applicable only if Pecan Femto 2 used) ------ */
+/* =============================================== Target definitions ============================================== */
+/* ======================== Pecan Femto 2 specific (applicable only if Pecan Femto 2 used) ========================= */
 #if TARGET == TARGET_PECAN_FEMTO2_1
 
 // Power management: Pecan Pico only one option available (because it has no MOSET GPS switch)
 // Use GPS power save:		GPS will be switched on permanently and sent into power save mode when GPS has
 //							lock (when <4Sats). GPS and UART interface will be reset and reinitialized when GPS
-//							does not lock for 3 cycles. 
-
-// Oscillator frequency:	Pecan Femto has a stable oscialltor
-
-#define OSC_FREQ(u)			26000000		// Oscillator frequency
+//							does not lock for 3 cycles.
 
 // Battery Type:			Pecan Femto can be only powered by a primary battery (it has no solar charger)
 
+// Oscillator frequency:	Pecan Femto has a stable oscillator
+#define OSC_FREQ(u)			26000000
+
 #endif
 
-/* ---------------------------- Target definitions ---------------------------- */
-/* ----------------------- Please don't touch anything ------------------------ */
+/* ============================================== Target definitions =============================================== */
+/* ========================================== Please don't touch anything ========================================== */
 
 #if TARGET == TARGET_PECAN_FEMTO2_1
 
@@ -271,14 +253,14 @@
 
 
 
-/* ------------------------------ Error messages ------------------------------ */
-/* ----------------------- Please don't touch anything ------------------------ */
+/* ================================================ Error messages ================================================= */
+/* ========================================== Please don't touch anything ========================================== */
 
-// TODO: Rewrite configuration validation again and check which checks are missing
+// TODO: Rewrite configuration validation again
 
 
-/* ---------------------------- Misc definitions ------------------------------ */
-/* ----------------------- Please don't touch anything ------------------------ */
+/* =============================================== Misc definitions ================================================ */
+/* ========================================== Please don't touch anything ========================================== */
 
 #ifdef BMP180_AVAIL
 	#define USE_I2C
@@ -287,8 +269,8 @@
 	#define USE_I2C
 #endif
 
-/* ---------- Constant definitions (which will never change in life) ---------- */
-/* ----------------------- Please don't touch anything ------------------------ */
+/* ============================ Constant definitions (which will never change in life) ============================= */
+/* ========================================== Please don't touch anything ========================================== */
 
 // Frequency (which is used after reset state)
 #define DEFAULT_FREQUENCY			144800000
@@ -306,5 +288,9 @@
 #define RADIO_FREQUENCY_AUSTRALIA	145175000
 #define RADIO_FREQUENCY_NEWZEALAND	144575000
 #define RADIO_FREQUENCY_THAILAND	145525000
+
+// APRS Destination callsign
+#define D_CALLSIGN					"APECAN" // APExxx = Pecan device
+#define D_CALLSIGN_ID				0
 
 #endif
