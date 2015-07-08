@@ -21,9 +21,9 @@
 #include "defines.h"
 #include "LPC11xx.h"
 
-// Type of Pecan which is used
-// TARGET_PECAN_PICO6
-// TARGET_PECAN_PICO6
+// Type of Pecan:
+//							TARGET_PECAN_PICO6    for Pecan Pico 6
+//							TARGET_PECAN_FEMTO2_1 for Pecan Femto 2.1
 #define TARGET				TARGET_PECAN_PICO6
 
 // APRS Source Callsign
@@ -156,10 +156,7 @@
 	#define VCXO_POWERED_BY_LDO					// VCXO powered by LDO (VCC1V8)
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
 	#define GPS_BAUDRATE		9600			// Baudrate for ublox MAX7 or MAX8
-	
-	#ifndef USE_GPS_POWER_SAVE
 	#define USE_GPS_HW_SW						// Use Hardware switch for GPS power
-	#endif
 
 	#define ADC_REF				REF_VCC1V8_LDO	// ADC reference is 1.8V LDO
 	#define ADC_PIO_REF			R_PIO1_1
