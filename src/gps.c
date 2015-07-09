@@ -282,7 +282,7 @@ void parse_status(const char *token)
 
 void parse_lat(const char *token)
 {
-	// Parses latitude in the format DDMM.MMMMM
+	// Parses latitude in the format DDMM.MMMM
 	char degs[3];
 	char mins[3];
 	if (strlen(token) >= 4) {
@@ -304,7 +304,7 @@ void parse_lat_hemi(const char *token)
 
 void parse_lon(const char *token)
 {
-	// Longitude is in the format DDDMM.MMMMM
+	// Longitude is in the format DDDMM.MMMM
 	char degs[4];
 	char mins[3];
 	if(strlen(token) >= 5) {
