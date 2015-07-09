@@ -374,7 +374,7 @@ void GPS_PowerOff(void) {
 void GPS_PowerOn(void) {
 	#ifdef USE_GPS_HW_SW
 	gps_hw_switch(true);					// Power up GPS
-	delay(1000);							// Just to be sure GPS has booted completely
+	delay(3000);							// Just to be sure GPS has booted completely
 	#endif
 
 	gps_set_nmeaCompatibility();			// Configure compatibility mode, this must be done because the code assumes specific NMEA parameter lengths
