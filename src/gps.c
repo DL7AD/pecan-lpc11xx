@@ -282,7 +282,7 @@ void parse_status(const char *token)
 
 void parse_lat(const char *token)
 {
-	// Parses latitude in the format DDMM.MMMM
+	// Parses latitude in the format DDMM.MMMMM
 	char degs[3];
 	char mins[3];
 	if (strlen(token) >= 4) {
@@ -292,7 +292,7 @@ void parse_lat(const char *token)
 		mins[0] = token[2];
 		mins[1] = token[3];
 		mins[2] = '\0';
-		newFix.latitude = atoi(degs) + atoi(mins) / (double)60 + atoi(token + 5) / (double)600000;
+		newFix.latitude = atoi(degs) + atoi(mins) / (double)60 + atoi(token + 5) / (double)6000000;
 	}
 }
 
@@ -304,7 +304,7 @@ void parse_lat_hemi(const char *token)
 
 void parse_lon(const char *token)
 {
-	// Longitude is in the format DDDMM.MMMM
+	// Longitude is in the format DDDMM.MMMMM
 	char degs[4];
 	char mins[3];
 	if(strlen(token) >= 5) {
@@ -315,7 +315,7 @@ void parse_lon(const char *token)
 		mins[0] = token[3];
 		mins[1] = token[4];
 		mins[2] = '\0';
-		newFix.longitude = atoi(degs) + atoi(mins) / (double)60 + atoi(token + 6) / (double)600000;
+		newFix.longitude = atoi(degs) + atoi(mins) / (double)60 + atoi(token + 6) / (double)6000000;
 	}
 }
 
@@ -381,8 +381,8 @@ void GPS_PowerOn(void) {
 	delay(3000);							// Just to be sure GPS has booted completely
 	#endif
 
-	gps_set_nmeaCompatibility();			// Configure compatibility mode, this must be done because the code assumes specific NMEA parameter lengths
-	delay(100);
+//	gps_set_nmeaCompatibility();			// Configure compatibility mode, this must be done because the code assumes specific NMEA parameter lengths
+//	delay(100);
 	gps_set_gps_only();						// Switch off GLONASS, Baidoo, QZSS, Galileo
 	delay(100);
 	gps_configureActiveNMEASentences();		// Switch off unnecessary NMEA sentences (only GPRMC and GPGGA needed)
