@@ -37,7 +37,7 @@
 								<option id="gnu.c.compiler.option.misc.other.1637283476" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -fno-builtin -ffunction-sections -fdata-sections" valueType="string"/>
 								<option id="com.crt.advproject.gcc.hdrlib.1430783623" name="Library headers" superClass="com.crt.advproject.gcc.hdrlib" value="com.crt.advproject.gcc.hdrlib.codered" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1230874395" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
-								<option id="com.crt.advproject.gcc.exe.debug.option.optimization.level.1084359245" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.debug.option.optimization.level" value="gnu.c.optimization.level.none" valueType="enumerated"/>
+								<option id="com.crt.advproject.gcc.exe.debug.option.optimization.level.1084359245" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.debug.option.optimization.level" value="gnu.c.optimization.level.optimize" valueType="enumerated"/>
 								<inputType id="com.crt.advproject.compiler.input.1709298736" superClass="com.crt.advproject.compiler.input"/>
 							</tool>
 							<tool id="com.crt.advproject.gas.exe.debug.1654330253" name="MCU Assembler" superClass="com.crt.advproject.gas.exe.debug">
@@ -92,7 +92,7 @@
 					</folderInfo>
 					<fileInfo id="com.crt.advproject.config.exe.debug.976665450.src/cr_startup_lpc11xx.c" name="cr_startup_lpc11xx.c" rcbsApplicability="disable" resourcePath="src/cr_startup_lpc11xx.c" toolsToInvoke="com.crt.advproject.gcc.exe.debug.613826658.1743167165">
 						<tool id="com.crt.advproject.gcc.exe.debug.613826658.1743167165" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.debug.613826658">
-							<option id="com.crt.advproject.gcc.exe.debug.option.optimization.level.382081854" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.debug.option.optimization.level" value="gnu.c.optimization.level.none" valueType="enumerated"/>
+							<option id="com.crt.advproject.gcc.exe.debug.option.optimization.level.382081854" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.debug.option.optimization.level" value="gnu.c.optimization.level.optimize" valueType="enumerated"/>
 							<inputType id="com.crt.advproject.compiler.input.142984272" superClass="com.crt.advproject.compiler.input"/>
 						</tool>
 					</fileInfo>
