@@ -48,7 +48,7 @@ uint32_t getBatteryMV(void)
 {
 	#if ADC_REF == REF_VCC1V8_LDO
 	uint32_t ref = getADC(ADC_AD_REF);
-	return 1777 * 1024 / ref;	// Calculate reference voltage (VCC which is also battery voltage)
+	return 1811 * 1024 / ref;	// Calculate reference voltage (VCC which is also battery voltage)
 	#elif ADC_REF == REF_VCC
 	return getADC(ADC_AD_BATT) / REF_MV;		// Return battery voltage
 	#endif
@@ -75,7 +75,7 @@ uint32_t getSolarMV(void)
 	#if ADC_REF == REF_VCC1V8_LDO
 	uint32_t adc = getADC(ADC_AD_SOLAR);
 	uint32_t batt = getBatteryMV();
-	return adc * batt / 465; // Calculation adjusted to voltage divider (GND---10k--+--22k---VCC)
+	return (adc * batt) / 1024;
 	#elif ADC_REF == REF_VCC
 	return getADC(ADC_AD_SOLAR) / REF_MV;
 	#endif
