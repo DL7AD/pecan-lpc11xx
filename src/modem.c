@@ -11,11 +11,11 @@ uint32_t radio_frequency = 0;
 uint8_t radio_power = 0;
 
 // Sine table
-const uint8_t sine_table[16] = {
-	128,176,218,245,
-	255,245,218,176,
-	128,79, 37, 10,
-	0,  10, 37, 79
+const uint8_t sine_table[32] = {
+	16,19,21,24,26,28,30,31,
+	31,31,30,28,26,24,21,19,
+	16,12,10,7, 5, 3, 1, 0,
+	0, 0, 1, 3, 5, 7, 10,12,
 };
 
 /* The sine_table is the carrier signal. To achieve phase continuity, each tone
@@ -31,7 +31,7 @@ const uint8_t sine_table[16] = {
  */
 
 #define TX_CPU_CLOCK		48000000
-#define REST_DUTY			127
+//#define REST_DUTY			127
 #define TABLE_SIZE			sizeof(sine_table)
 #define PLAYBACK_RATE		(TX_CPU_CLOCK / 256) // When transmitting CPU is switched to 48 MHz -> 187.5 kHz
 #define BAUD_RATE			1200
@@ -67,8 +67,8 @@ void Modem_Init(void)
 	// Setup PWM timer
 	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<9);	// Enable TIMER32_0 clock
 	LPC_IOCON->R_PIO0_11 = 0b11;			// PIO0_11 is MAT3 output
-	LPC_TMR32B0->MR1 = 256;					// MR1 = Period
-	LPC_TMR32B0->MR3 = 127;					// MR3 = 50% duty cycle
+	LPC_TMR32B0->MR1 = 32;					// MR1 = Period
+	LPC_TMR32B0->MR3 = 16;					// MR3 = 50% duty cycle
 	LPC_TMR32B0->MCR = 0x10;				// MR1 resets timer
 	LPC_TMR32B0->PWMC = 0b1010;				// Enable PWM1 and PWM3
 	LPC_TMR32B0->TCR = 0b1;					// Enable Timer
