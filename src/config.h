@@ -54,21 +54,21 @@
 //							Range 1-127, Radio output power depends on VCC voltage.
 //							127 @ VCC=3400mV ~ 100mW
 //							20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER			40
+#define RADIO_POWER			127
 
 /* ============================================== Target definitions =============================================== */
 /* ========================= Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ========================== */
 #if TARGET == TARGET_PECAN_PICO6
 
 // Power management: Pecan Pico has two options of power management
-// 1. Use hardware switch:	GPS will be switched on by MOSFET each cycle. When GPS has locked (<4Sats, it will be
+// 1. Use hardware switch:	GPS will be switched on by MOSFET each cycle. When GPS has locked (>4Sats, it will be
 //							switched off by MOSFET. GPS will remain switched on when GPS has no lock until it locks
 //							GPS and UART interface will be reset and reinitialized when GPS does not lock for
 //							3 cycles. To use this mode, comment out USE_GPS_POWER_SAVE.
 // 1. Use GPS power save:	GPS will be switched on permanently and sent into power save mode when GPS has
-//							lock (when <4Sats). GPS and UART interface will be reset and reinitialized when GPS
+//							lock (when >4Sats). GPS and UART interface will be reset and reinitialized when GPS
 //							does not lock for 3 cycles. To use this mode, USE_GPS_POWER_SAVE has to be set.
-#define USE_GPS_POWER_SAVE
+//#define USE_GPS_POWER_SAVE
 
 // Battery type: Pecan Pico has two options of battery types
 // 1. PRIMARY				LiFeSe2 Power save modes disabled, battery will be used until completely empty
@@ -90,7 +90,7 @@
 
 // Power management: Pecan Pico only one option available (because it has no MOSET GPS switch)
 // Use GPS power save:		GPS will be switched on permanently and sent into power save mode when GPS has
-//							lock (when <4Sats). GPS and UART interface will be reset and reinitialized when GPS
+//							lock (when >4Sats). GPS and UART interface will be reset and reinitialized when GPS
 //							does not lock for 3 cycles.
 
 // Battery Type:			Pecan Femto can be only powered by a primary battery (it has no solar charger)
