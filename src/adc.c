@@ -48,9 +48,10 @@ uint32_t getBatteryMV(void)
 {
 	#if ADC_REF == REF_VCC1V8_LDO
 	uint32_t ref = getADC(ADC_AD_REF);
-	return 1811 * 1024 / ref;	// Calculate reference voltage (VCC which is also battery voltage)
+	return 1811 * 1024 / ref;			// Calculate reference voltage (VCC which is also battery voltage)
 	#elif ADC_REF == REF_VCC
-	return getADC(ADC_AD_BATT) / REF_MV;		// Return battery voltage
+	uint32_t adc = getADC(ADC_AD_BATT);
+	return (adc * REF_MV) >> 10;		// Return battery voltage
 	#endif
 }
 

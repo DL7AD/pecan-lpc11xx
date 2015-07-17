@@ -24,7 +24,7 @@
 // Type of Pecan:
 //							TARGET_PECAN_PICO6    for Pecan Pico 6
 //							TARGET_PECAN_FEMTO2_1 for Pecan Femto 2.1
-#define TARGET				TARGET_PECAN_PICO6
+#define TARGET				TARGET_PECAN_FEMTO2_1
 
 // APRS Source Callsign
 #define S_CALLSIGN			"DL7AD"
@@ -54,7 +54,7 @@
 //							Range 1-127, Radio output power depends on VCC voltage.
 //							127 @ VCC=3400mV ~ 100mW
 //							20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER			127
+#define RADIO_POWER			50
 
 /* ============================================== Target definitions =============================================== */
 /* ========================= Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ========================== */
@@ -109,7 +109,7 @@
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
 	#define GPS_BAUDRATE		9600			// Baudrate for ublox MAX7 or MAX8
 	#define ADC_REF				REF_VCC			// ADC reference VCC input
-	#define REF_MV				3300			// Reference voltage in mv
+	#define REF_MV				2050			// Reference voltage in mv
 	#define BATTERY_TYPE		PRIMARY			// Use Primary battery
 
 	#define ADC_PIO_BATT		R_PIO1_2
@@ -142,6 +142,7 @@
 
 	#define VCXO_PIO_CTRL		PIO1_6
 	#define VCXO_MR_CTRL		MR0
+	#define VCXO_VAL			0x2
 
 	#define RADIO_GPIO_GPIO0	LPC_GPIO1
 	#define RADIO_PIO_GPIO0		PIO1_7
@@ -199,6 +200,7 @@
 
 	#define VCXO_PIO_CTRL		PIO0_11
 	#define VCXO_MR_CTRL		MR3
+	#define VCXO_VAL			0x3
 
 	#define RADIO_GPIO_GPIO0	LPC_GPIO3
 	#define RADIO_PIO_GPIO0		PIO3_4
