@@ -65,12 +65,12 @@ void Modem_Init(void)
 	radioTune(radio_frequency, 1, radio_power);
 
 	// Setup PWM timer
-	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<9);	// Enable TIMER32_0 clock
-	LPC_IOCON->R_PIO0_11 = 0b11;			// PIO0_11 is MAT3 output
+	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<9);	// Enable TIMER32_B0 clock
+	LPC_IOCON->VCXO_PIO_CTRL = VCXO_VAL;	// PIO0_11 is MAT3 output
 	LPC_TMR32B0->MR1 = 32;					// MR1 = Period
-	LPC_TMR32B0->MR3 = 16;					// MR3 = 50% duty cycle
+	LPC_TMR32B0->VCXO_MR_CTRL = 16;			// MRx = 50% duty cycle
 	LPC_TMR32B0->MCR = 0x10;				// MR1 resets timer
-	LPC_TMR32B0->PWMC = 0b1010;				// Enable PWM1 and PWM3
+	LPC_TMR32B0->PWMC = 0b1111;				// Enable alls PWMs
 	LPC_TMR32B0->TCR = 0b1;					// Enable Timer
 
 	// Setup sampling timer
@@ -131,7 +131,7 @@ void On_Sample_Handler(void) {
 
 	phase += phase_delta;
 
-	LPC_TMR32B0->MR3 = sine_table[(phase >> 7) & (TABLE_SIZE - 1)];
+	LPC_TMR32B0->VCXO_MR_CTRL = sine_table[(phase >> 7) & (TABLE_SIZE - 1)];
 
 	uint32_t samplespb = SAMPLES_PER_BAUD;
 	if(++current_sample_in_baud == samplespb) {
