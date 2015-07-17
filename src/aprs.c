@@ -34,7 +34,6 @@
 static uint16_t telemetry_counter = 0;
 static uint16_t loss_of_gps_counter = 0;
 
-// changed from const  
 s_address_t addresses[] =
 { 
 	{D_CALLSIGN, D_CALLSIGN_ID},  // Destination callsign
