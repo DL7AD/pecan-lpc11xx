@@ -13,7 +13,8 @@ Known bugs
 Todo:
   * Watchdog
   * Accurate geofencing for frequency switching
-  * Evaluation whether ublox MAX8 works at >12,000m altitude or not
+  * ~~Evaluation whether ublox MAX8 works at >12,000m altitude or not~~ Has been checked with GPS Simulator, bug fixed
+  * ~~Evaluation whether APRS frequencies changes at different location~~ works perfectly
   * GPS jump filter
   * ~~Full tracker reset when GPS lost~~ Discarded, GPS and UART Interface will be reset
   * In-System-AFSK-Modulation
