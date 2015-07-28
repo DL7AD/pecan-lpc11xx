@@ -24,7 +24,7 @@
 // Type of Pecan:
 //							TARGET_PECAN_PICO6    for Pecan Pico 6
 //							TARGET_PECAN_FEMTO2_1 for Pecan Femto 2.1
-#define TARGET				TARGET_PECAN_FEMTO2_1
+#define TARGET				TARGET_PECAN_PICO6
 
 // APRS Source Callsign
 #define S_CALLSIGN			"DL7AD"
@@ -54,7 +54,7 @@
 //							Range 1-127, Radio output power depends on VCC voltage.
 //							127 @ VCC=3400mV ~ 100mW
 //							20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER			50
+#define RADIO_POWER			5
 
 /* ============================================== Target definitions =============================================== */
 /* ========================= Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ========================== */
@@ -198,7 +198,7 @@
 	#define VCXO_PIO_EN			PIO0_3
 	#define VCXO_PIN_EN			(1 << 3)
 
-	#define VCXO_PIO_CTRL		PIO0_11
+	#define VCXO_PIO_CTRL		R_PIO0_11
 	#define VCXO_MR_CTRL		MR3
 	#define VCXO_VAL			0x3
 
