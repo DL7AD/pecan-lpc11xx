@@ -285,12 +285,9 @@ void transmit_position(gpsstate_t gpsstate)
 		if(loss_of_gps_counter >= 5) { // GPS lost 3 times (6min if cycle = 2min) TODO: This is actually not a task of APRS encoding
 			loss_of_gps_counter = 0;
 
-			// Reset UART interface
-			GPS_PowerOff();
-			GPS_Init();
-
-			// Reset GPS
-			gps_reset();
+			GPS_PowerOff();	// Reset UART interface
+			gps_reset();	// Reset GPS
+			GPS_Init();		// Reinit GPS
 		}
 		ax25_send_string(" GPS loss ");
 		nsprintf(temp, 3, "%02d", loss_of_gps_counter);

@@ -5,15 +5,18 @@ made for
   * Pecan Femto 2.1 (based on LPC1114FHN33/303)
   * Pecan Pico 6 (based on LPC1114FHN33/333)
 
+! Modulation only works perfect when Compiler optimization is switch on (-O1 at least)
+
 Known bugs
-  * ADC reading does not work correctly in burst mode (OVERRUN error)
+  * ~~ADC reading does not work correctly in burst mode (OVERRUN error)~~ solved, ADC conversion has been started too early, LDO_Vout capacitors have been charged by internal GPIO pull up to VCC and haven't been discharged
 
 Todo:
   * Watchdog
   * Accurate geofencing for frequency switching
-  * Evaluation whether ublox MAX8 works at >12,000m altitude or not
+  * ~~Evaluation whether ublox MAX8 works at >12,000m altitude or not~~ Has been checked with GPS Simulator, bug fixed
+  * ~~Evaluation whether APRS frequencies changes at different location~~ works perfectly
   * GPS jump filter
-  * Full tracker reset when GPS lost
+  * ~~Full tracker reset when GPS lost~~ Discarded, GPS and UART Interface will be reset
   * In-System-AFSK-Modulation
 
 Versions
