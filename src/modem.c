@@ -2,7 +2,6 @@
 #include "modem.h"
 #include "target.h"
 #include "global.h"
-#include "debug.h"
 
 // only include the selected radio
 #include "Si446x.h"
@@ -131,7 +130,13 @@ void On_Sample_Handler(void) {
 
 	phase += phase_delta;
 
-	LPC_TMR32B0->VCXO_MR_CTRL = sine_table[(phase >> 7) & (TABLE_SIZE - 1)];
+	if(phase_delta == PHASE_DELTA_1200) {
+		setHighTone();
+	} else {
+		setLowTone();
+	}
+
+	//LPC_TMR32B0->VCXO_MR_CTRL = sine_table[(phase >> 7) & (TABLE_SIZE - 1)];
 
 	uint32_t samplespb = SAMPLES_PER_BAUD;
 	if(++current_sample_in_baud == samplespb) {

@@ -87,18 +87,18 @@ bool Si406x_Init(void) {
 	// Set transmitter GPIOs
 	uint8_t gpio_pin_cfg_command[] = {
 		0x13,	// Command type = GPIO settings
-		0x04,	// GPIO0        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
-		0x02,	// GPIO1        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
-		0x02,	// GPIO2        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
-		0x03,	// GPIO3        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
-		0x08,	// NIRQ
-		0x11,	// SDO
+		0x44,	// GPIO0        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
+		0x00,	// GPIO1        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
+		0x00,	// GPIO2        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
+		0x00,	// GPIO3        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
+		0x00,	// NIRQ
+		0x00,	// SDO
 		0x00	// GEN_CONFIG
 	};
 	SendCmdReceiveAnswer(gpio_pin_cfg_command, 8, NULL, 8);
 
 	// Set misc configuration
-	setModem();
+	setModem(u);
 
 	return true;
 }
@@ -186,19 +186,47 @@ void sendFrequencyToSi406x(uint32_t freq, uint32_t shift) {
 	SendCmdReceiveAnswerSetDelay(set_frequency_property_command, 10, NULL, 10, 100);
 }
 
-void setModem(void) {
-	uint8_t set_modem_mod_type_command[] = {
-		0x11,		// Set property command
-		0x20,		// Group
-		0x01,		// Number of groups
-		0x00,		// Start of property
-		0b10001010	// Property
-					// [7  ] TX_DIRECT_MODE_TYPE
-					// [6:5] TX_DIRECT_MODE_GPIO (GPIO number)
-					// [4:3] MOD_SOURCE
-					// [2:0] MOD_TYPE
-	};
-	SendCmdReceiveAnswer(set_modem_mod_type_command, 5, NULL, 5);
+void setModem(uint32_t u) {
+
+	// Disable preamble
+	uint8_t disable_preamble[] = {0x11, 0x10, 0x01, 0x00, 0x00};
+	SendCmdReceiveAnswer(disable_preamble, 5, NULL, 5);
+
+	// Do not transmit sync word
+	uint8_t no_sync_word[] = {0x11, 0x11, 0x01, 0x11, (0x01 << 7)};
+	SendCmdReceiveAnswer(no_sync_word, 5, NULL, 5);
+
+	// Setup the NCO modulo and oversampling mode
+	uint32_t s = OSC_FREQ(u) / 10;
+	uint8_t f3 = (s >> 24) & 0xFF;
+	uint8_t f2 = (s >> 16) & 0xFF;
+	uint8_t f1 = (s >>  8) & 0xFF;
+	uint8_t f0 = (s >>  0) & 0xFF;
+	uint8_t setup_oversampling[] = {0x11, 0x20, 0x04, 0x06, f3, f2, f1, f0};
+	SendCmdReceiveAnswer(setup_oversampling, 8, NULL, 8);
+
+	// setup the NCO data rate for APRS
+	uint8_t setup_data_rate[] = {0x11, 0x20, 0x03, 0x03, 0x00, 0x11, 0x30};
+	SendCmdReceiveAnswer(setup_data_rate, 7, NULL, 7);
+
+	/* use 2FSK from async GPIO0 */
+	uint8_t use_2gfsk[] = {0x11, 0x20, 0x01, 0x00, 0x0B};
+	SendCmdReceiveAnswer(use_2gfsk, 5, NULL, 5);
+
+
+
+//	uint8_t set_modem_mod_type_command[] = {
+//		0x11,		// Set property command
+//		0x20,		// Group
+//		0x01,		// Number of groups
+//		0x00,		// Start of property
+//		0b10001010	// Property
+//					// [7  ] TX_DIRECT_MODE_TYPE
+//					// [6:5] TX_DIRECT_MODE_GPIO (GPIO number)
+//					// [4:3] MOD_SOURCE
+//					// [2:0] MOD_TYPE
+//	};
+//	SendCmdReceiveAnswer(set_modem_mod_type_command, 5, NULL, 5);
 }
 
 
