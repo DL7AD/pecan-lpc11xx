@@ -58,7 +58,7 @@ int main(void)
 	display_configuration();
 
 	// This delay is necessary to get access again after module fell into a deep sleep state in which the reset pin is disabled !!!
-	// To get access again, its necessary to access the chip in active mode. If chip is almost everytime in sleep mode, it can be
+	// To get access again, its necessary to access the chip in active mode. If chip is almost every time in sleep mode, it can be
 	// only waked up by the reset pin which is (as mentioned before) disabled.
 	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
 
