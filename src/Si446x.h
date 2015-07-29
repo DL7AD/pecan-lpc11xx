@@ -16,7 +16,7 @@ bool Si406x_Init(void);
 void SendCmdReceiveAnswer(uint8_t* txData, uint32_t byteCountTx, uint8_t* rxData, uint32_t byteCountRx);
 void SendCmdReceiveAnswerSetDelay(uint8_t* txData, uint32_t byteCountTx, uint8_t* rxData, uint32_t byteCountRx, uint32_t delays);
 void sendFrequencyToSi406x(uint32_t freq, uint32_t shift);
-void setModem(uint32_t u);
+void setModem();
 void setDeviation(uint32_t deviation);
 void setPowerLevel(uint8_t level);
 void startTx(void);

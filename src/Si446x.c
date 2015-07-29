@@ -104,7 +104,7 @@ bool Si406x_Init(void) {
 	SendCmdReceiveAnswer(gpio_pin_cfg_command, 8, NULL, 8);
 
 	// Set misc configuration
-	setModem(u);
+	setModem();
 
 	return true;
 }
@@ -183,16 +183,19 @@ void sendFrequencyToSi406x(uint32_t freq, uint32_t shift) {
 	uint32_t m1 = (m - m2 * 0x10000) >> 8;
 	uint32_t m0 = (m - m2 * 0x10000 - (m1 << 8));
 
-	uint32_t channel_increment = 524288 * outdiv * shift / (2 * osc_freq);
-	uint8_t c1 = channel_increment >> 8;
-	uint8_t c0 = channel_increment - (0x100 * c1);
-
 	// Transmit frequency to chip
-	uint8_t set_frequency_property_command[] = {0x11, 0x40, 0x06, 0x00, n, m2, m1, m0, c1, c0};
-	SendCmdReceiveAnswerSetDelay(set_frequency_property_command, 10, NULL, 10, 100);
+	uint8_t set_frequency_property_command[] = {0x11, 0x40, 0x04, 0x00, n, m2, m1, m0};
+	SendCmdReceiveAnswerSetDelay(set_frequency_property_command, 8, NULL, 8, 100);
+
+	uint32_t x = ((((uint32_t)1 << 19) * outdiv * 1300.0)/(2*OSC_FREQ(3)))*2;
+	uint8_t x2 = (x >> 16) & 0xFF;
+	uint8_t x1 = (x >>  8) & 0xFF;
+	uint8_t x0 = (x >>  0) & 0xFF;
+	uint8_t set_deviation[] = {0x11, 0x20, 0x03, 0x0a, x2, x1, x0};
+	SendCmdReceiveAnswerSetDelay(set_deviation, 7, NULL, 7, 100);
 }
 
-void setModem(uint32_t u) {
+void setModem() {
 
 	// Disable preamble
 	uint8_t disable_preamble[] = {0x11, 0x10, 0x01, 0x00, 0x00};
@@ -203,7 +206,7 @@ void setModem(uint32_t u) {
 	SendCmdReceiveAnswer(no_sync_word, 5, NULL, 5);
 
 	// Setup the NCO modulo and oversampling mode
-	uint32_t s = OSC_FREQ(u) / 10;
+	uint32_t s = OSC_FREQ(3) / 10;
 	uint8_t f3 = (s >> 24) & 0xFF;
 	uint8_t f2 = (s >> 16) & 0xFF;
 	uint8_t f1 = (s >>  8) & 0xFF;
@@ -220,12 +223,12 @@ void setModem(uint32_t u) {
 	SendCmdReceiveAnswer(use_2gfsk, 5, NULL, 5);
 
 	// Set AFSK filter
-	uint8_t coeff[] = {0x81, 0x9f, 0xc4, 0xee, 0x18, 0x3e, 0x5c, 0x70, 0x76};
-	uint8_t i;
-	for(i=0; i<sizeof(coeff); i++) {
-		uint8_t msg[] = {0x20, 0x17-i, coeff[i]};
-		SendCmdReceiveAnswer(msg, 3, NULL, 3);
-	}
+//	uint8_t coeff[9] = {0xfa, 0xe5, 0xd8, 0xde, 0xf8, 0x21, 0x4f, 0x71, 0x7f};
+//	uint8_t i;
+//	for(i=0; i<sizeof(coeff); i++) {
+//		uint8_t msg[] = {0x11, 0x20, 0x01, 0x17-i, coeff[i]};
+//		SendCmdReceiveAnswer(msg, 5, NULL, 5);
+//	}
 }
 
 void setPowerLevel(uint8_t level) {
