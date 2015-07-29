@@ -1,3 +1,9 @@
+/**
+ * Si4464 driver specialized for APRS transmissions. Modulation concept has been taken
+ * from Stefan Biereigel DK3SB.
+ * @see http://www.github.com/thasti/utrak
+ */
+
 #include "target.h"
 #include "Si446x.h"
 #include "config.h"
@@ -81,8 +87,8 @@ bool Si406x_Init(void) {
 	SendCmdReceiveAnswer(command, 9, rx, 9);
 
 	// Clear all pending interrupts
-	uint8_t get_int_status_command[] = {0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	SendCmdReceiveAnswer(get_int_status_command, 9, NULL, 9);
+	//uint8_t get_int_status_command[] = {0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	//SendCmdReceiveAnswer(get_int_status_command, 9, NULL, 9);
 
 	// Set transmitter GPIOs
 	uint8_t gpio_pin_cfg_command[] = {
@@ -209,39 +215,17 @@ void setModem(uint32_t u) {
 	uint8_t setup_data_rate[] = {0x11, 0x20, 0x03, 0x03, 0x00, 0x11, 0x30};
 	SendCmdReceiveAnswer(setup_data_rate, 7, NULL, 7);
 
-	/* use 2FSK from async GPIO0 */
+	// use 2GFSK from async GPIO0
 	uint8_t use_2gfsk[] = {0x11, 0x20, 0x01, 0x00, 0x0B};
 	SendCmdReceiveAnswer(use_2gfsk, 5, NULL, 5);
 
-
-
-//	uint8_t set_modem_mod_type_command[] = {
-//		0x11,		// Set property command
-//		0x20,		// Group
-//		0x01,		// Number of groups
-//		0x00,		// Start of property
-//		0b10001010	// Property
-//					// [7  ] TX_DIRECT_MODE_TYPE
-//					// [6:5] TX_DIRECT_MODE_GPIO (GPIO number)
-//					// [4:3] MOD_SOURCE
-//					// [2:0] MOD_TYPE
-//	};
-//	SendCmdReceiveAnswer(set_modem_mod_type_command, 5, NULL, 5);
-}
-
-
-void setDeviation(uint32_t deviation) {
-	float units_per_hz = ((float)(0x40000*outdiv)) / ((float)osc_freq);
-
-	// Set deviation for RTTY
-	uint32_t modem_freq_dev = (unsigned long)(units_per_hz * deviation / 2.0 );
-	uint32_t mask = 0b11111111;
-	uint8_t modem_freq_dev_0 = mask & modem_freq_dev;
-	uint8_t modem_freq_dev_1 = mask & (modem_freq_dev >> 8);
-	uint8_t modem_freq_dev_2 = mask & (modem_freq_dev >> 16);
-
-	uint8_t set_modem_freq_dev_command[] = {0x11, 0x20, 0x03, 0x0A, modem_freq_dev_2, modem_freq_dev_1, modem_freq_dev_0};
-	SendCmdReceiveAnswer(set_modem_freq_dev_command, 7, NULL, 7);
+	// Set AFSK filter
+	uint8_t coeff[] = {0x81, 0x9f, 0xc4, 0xee, 0x18, 0x3e, 0x5c, 0x70, 0x76};
+	uint8_t i;
+	for(i=0; i<sizeof(coeff); i++) {
+		uint8_t msg[] = {0x20, 0x17-i, coeff[i]};
+		SendCmdReceiveAnswer(msg, 3, NULL, 3);
+	}
 }
 
 void setPowerLevel(uint8_t level) {
@@ -285,7 +269,6 @@ void radioTune(uint32_t frequency, uint32_t shift, uint8_t level) {
 		frequency = 145300000UL;
 
 	sendFrequencyToSi406x(frequency, shift);	// Frequency
-	setDeviation(shift);						// Shift
 	setPowerLevel(level);						// Power level
 
 	startTx();

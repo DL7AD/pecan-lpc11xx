@@ -130,7 +130,7 @@ void On_Sample_Handler(void) {
 
 	phase += phase_delta;
 
-	if(phase_delta == PHASE_DELTA_1200) {
+	if(sine_table[(phase >> 7) & (TABLE_SIZE - 1)] > 15) {
 		setHighTone();
 	} else {
 		setLowTone();
