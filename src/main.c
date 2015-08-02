@@ -39,6 +39,7 @@
  */
 void power_save()
 {
+	//#undef DEBUG
 	#ifdef DEBUG
 	delay(8000);
 	#else

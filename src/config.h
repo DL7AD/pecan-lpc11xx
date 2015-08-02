@@ -27,8 +27,8 @@
 #define TARGET				TARGET_PECAN_PICO6
 
 // APRS Source Callsign
-#define S_CALLSIGN			"DL7AD"
-#define S_CALLSIGN_ID		12
+#define S_CALLSIGN			"DL4MDW"
+#define S_CALLSIGN_ID		11
 
 // APRS Symbol
 #define APRS_SYMBOL_TABLE	'/' // Default table
@@ -44,17 +44,17 @@
 //#define APRS_COMMENT		"Pecan Tracker"
 
 // TX delay in milliseconds
-#define TX_DELAY			300
+#define TX_DELAY			1000
 
 
-#define TIME_SLEEP_CYCLE	120000
+#define TIME_SLEEP_CYCLE	300000
 #define TIME_MAX_GPS_SEARCH	120000
 
 // Radio power:				Radio power (for Si4464)
 //							Range 1-127, Radio output power depends on VCC voltage.
 //							127 @ VCC=3400mV ~ 100mW
 //							20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER			5
+#define RADIO_POWER			50
 
 /* ============================================== Target definitions =============================================== */
 /* ========================= Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ========================== */
@@ -239,8 +239,8 @@
 #endif
 
 #if BATTERY_TYPE == SECONDARY
-	#define VOLTAGE_NOGPS		2600			// Don't switch on GPS below this voltage (Telemetry transmission only)
-	#define VOLTAGE_NOTRANSMIT	2500			// Don't transmit below this voltage
+	#define VOLTAGE_NOGPS		2500			// Don't switch on GPS below this voltage (Telemetry transmission only)
+	#define VOLTAGE_NOTRANSMIT	2300			// Don't transmit below this voltage
 	#define VOLTAGE_GPS_MAXDROP 100				// Max. Battery drop voltage until GPS is switched off while acquisition
 												// Example: VOLTAGE_NOGPS = 2700 & VOLTAGE_GPS_MAXDROP = 100 => GPS will be switched
 												// off at 2600mV, GPS will not be switched on if battery voltage already below 2700mV

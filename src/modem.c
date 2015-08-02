@@ -29,10 +29,8 @@ const uint8_t sine_table[32] = {
  * PHASE_DELTA_Fg = Tt*(Fg/Fm)
  */
 
-#define TX_CPU_CLOCK		48000000
-//#define REST_DUTY			127
 #define TABLE_SIZE			sizeof(sine_table)
-#define PLAYBACK_RATE		(TX_CPU_CLOCK / 256) // When transmitting CPU is switched to 48 MHz -> 187.5 kHz
+#define PLAYBACK_RATE		(Fosc / 256) // When transmitting CPU is switched to 48 MHz -> 187.5 kHz
 #define BAUD_RATE			1200
 #define SAMPLES_PER_BAUD	(PLAYBACK_RATE / BAUD_RATE) // 52.083333333 / 26.041666667
 #define PHASE_DELTA_1200	(((TABLE_SIZE * 1200) << 7) / PLAYBACK_RATE) // Fixed point 9.7 // 1258 / 2516
@@ -63,14 +61,24 @@ void Modem_Init(void)
 	// Key the radio
 	radioTune(radio_frequency, 1, radio_power);
 
-	// Setup sampling timer
-	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);	// Enable TIMER16_0 clock
-	LPC_TMR16B0->MR3 = 255;					// MR3 = Period
-	LPC_TMR16B0->MCR = 0x401;				// MR3 resets timer & MR0 generates interrupt
+	// Setup bit timer
+	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);	// Enable TIMER16_B0 clock
+	LPC_TMR16B0->PR = 10000;				// Timer prescaler (1200 ticks per second)
+	LPC_TMR16B0->MR3 = 1;					// MR3 = Period
+	LPC_TMR16B0->MCR = 0x600;				// MR3 resets timer & generates interrupt
 	LPC_TMR16B0->TCR = 0b1;					// Enable Timer
 
+	// Setup out timer
+	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<8);	// Enable TIMER16_B1 clock
+	LPC_TMR16B1->MR3 = 5000;				// MR3 = Period		5000 @ 1200Hz
+											//					2727 @ 2200Hz
+	LPC_TMR16B1->MCR = 0x600;				// MR3 resets timer & generates interrupt
+	LPC_TMR16B1->TCR = 0b1;					// Enable Timer
+
 	NVIC_SetPriority(TIMER_16_0_IRQn, INT_PRIORITY_TMR16B0);
+	NVIC_SetPriority(TIMER_16_1_IRQn, INT_PRIORITY_TMR16B1);
 	NVIC_EnableIRQ(TIMER_16_0_IRQn);
+	NVIC_EnableIRQ(TIMER_16_1_IRQn);
 }
 
 bool modem_busy() {
@@ -83,14 +91,12 @@ void modem_flush_frame(void) {
 	packet_pos = 0;
 	current_sample_in_baud = 0;
 
-	Target_SetClock_PLL(Fosc, TX_CPU_CLOCK);	// Configure clock to 48 MHz so modulation PWM has higher frequency
 	Modem_Init();							// Initialize timers and radio
 
 	while(modem_busy())						// Wait for radio getting finished
 		__WFI();
 
 	radioShutdown();						// Shutdown radio
-	Target_SetClock_IRC();					// Reconfigure clock to 12 MHz
 }
 
 /**
@@ -100,40 +106,41 @@ void modem_flush_frame(void) {
 void On_Sample_Handler(void) {
 	// If done sending packet
 	if(packet_pos == modem_packet_size) {
-		LPC_TMR16B0->TCR = 0b10;	// Disable playback interrupt.
-		LPC_TMR16B0->IR = 0x01;		// Clear interrupt
+		LPC_TMR16B0->TCR = 0b10;	// Disable bit interrupt
+		//LPC_TMR16B0->IR = 0x08;		// Clear interrupt
+		LPC_TMR16B1->TCR = 0b10;	// Disable tone interrupt
+		//LPC_TMR16B1->IR = 0x08;		// Clear interrupt
 		return;						// Done
 	}
 
-	// If sent SAMPLES_PER_BAUD already, go to the next bit
-	if (current_sample_in_baud == 0) {    // Load up next bit
-		if ((packet_pos & 7) == 0) {          // Load up next byte
-			current_byte = modem_packet[packet_pos >> 3];
-		} else {
-			current_byte = current_byte / 2;  // ">>1" forces int conversion
-		}
-
-		if ((current_byte & 1) == 0) {
-			// Toggle tone (1200 <> 2200)
-			phase_delta ^= (PHASE_DELTA_1200 ^ PHASE_DELTA_2200);
-		}
-	}
-
-	phase += phase_delta;
-
-	if(sine_table[(phase >> 7) & (TABLE_SIZE - 1)] >= 15) {
-		setHighTone();
+	if ((packet_pos & 7) == 0) {          // Load up next byte
+		current_byte = modem_packet[packet_pos >> 3];
 	} else {
+		current_byte = current_byte / 2;  // ">>1" forces int conversion
+	}
+
+	if ((current_byte & 1) == 0) {
+		// Toggle tone (1200 <> 2200)
+		phase_delta ^= (PHASE_DELTA_1200 ^ PHASE_DELTA_2200);
+		LPC_TMR16B1->MR3 = phase_delta == PHASE_DELTA_1200 ? 5000 : 2727;
+	}
+
+	packet_pos++;
+
+	LPC_TMR16B0->IR = 0x08; // Clear interrupt
+}
+
+void On_Tone_Handler(void) {
+	static uint8_t tone;
+
+	if(tone) {
 		setLowTone();
+	} else {
+		setHighTone();
 	}
+	tone = !tone;
 
-	uint32_t samplespb = SAMPLES_PER_BAUD;
-	if(++current_sample_in_baud == samplespb) {
-		current_sample_in_baud = 0;
-		packet_pos++;
-	}
-
-	LPC_TMR16B0->IR = 0x01; // Clear interrupt
+	LPC_TMR16B1->IR = 0x08; // Clear interrupt
 }
 
 void modem_set_tx_freq(uint32_t frequency) {

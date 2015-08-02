@@ -223,12 +223,12 @@ void setModem() {
 	SendCmdReceiveAnswer(use_2gfsk, 5, NULL, 5);
 
 	// Set AFSK filter
-//	uint8_t coeff[] = {0x81, 0x9f, 0xc4, 0xee, 0x18, 0x3e, 0x5c, 0x70, 0x76};
-//	uint8_t i;
-//	for(i=0; i<sizeof(coeff); i++) {
-//		uint8_t msg[] = {0x11, 0x20, 0x01, 0x17-i, coeff[i]};
-//		SendCmdReceiveAnswer(msg, 5, NULL, 5);
-//	}
+	uint8_t coeff[] = {0x81, 0x9f, 0xc4, 0xee, 0x18, 0x3e, 0x5c, 0x70, 0x76};
+	uint8_t i;
+	for(i=0; i<sizeof(coeff); i++) {
+		uint8_t msg[] = {0x11, 0x20, 0x01, 0x17-i, coeff[i]};
+		SendCmdReceiveAnswer(msg, 5, NULL, 5);
+	}
 }
 
 void setPowerLevel(uint8_t level) {
@@ -277,11 +277,11 @@ void radioTune(uint32_t frequency, uint32_t shift, uint8_t level) {
 	startTx();
 }
 
-void setHighTone(void) {
+inline void setHighTone(void) {
 	RF_SHIFT_SET(HIGH);
 }
 
-void setLowTone(void) {
+inline void setLowTone(void) {
 	RF_SHIFT_SET(LOW);
 }
 

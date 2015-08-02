@@ -34,10 +34,11 @@
 #define UART_DATA_MAXLENGTH			128
 
 // Interrupt priority
-#define INT_PRIORITY_TMR16B0		8
-#define INT_PRIORITY_I2C			9
-#define INT_PRIORITY_UART			10
-#define INT_PRIORITY_SSP			11
+#define INT_PRIORITY_I2C			7
+#define INT_PRIORITY_UART			8
+#define INT_PRIORITY_SSP			9
+#define INT_PRIORITY_TMR16B0		10
+#define INT_PRIORITY_TMR16B1		11
 
 void TargetResetInit(void);
 void Target_SetClock_IRC(void);

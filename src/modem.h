@@ -30,6 +30,7 @@ void modem_start(void);
 void modem_flush_frame(void);
 bool modem_busy(void);
 void On_Sample_Handler(void);
+void On_Tone_Handler(void);
 void modem_set_tx_freq(uint32_t frequency);
 void modem_set_tx_power(uint8_t power);
 
