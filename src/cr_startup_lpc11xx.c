@@ -180,7 +180,7 @@ void (* const g_pfnVectors[])(void) = {
     I2C_IRQHandler,                         // I2C0
 #endif
     On_Sample_Handler,                      // CT16B0 (16-bit Timer 0)
-	On_Tone_Handler,                        // CT16B1 (16-bit Timer 1)
+	TIMER16_1_IRQHandler,                   // CT16B1 (16-bit Timer 1)
     TIMER32_0_IRQHandler,                   // CT32B0 (32-bit Timer 0)
     TIMER32_1_IRQHandler,                   // CT32B1 (32-bit Timer 1)
     On_SSP,                                 // SPI/SSP0 Interrupt

@@ -69,26 +69,15 @@ bool Si406x_Init(void) {
 	delay(1);											// Wait for transmitter to power up
 
 	// Measure temperature for determine oscillator frequency
-	ADC_Init();
-	uint32_t u = getBatteryMV();
-	ADC_DeInit();
-	osc_freq = OSC_FREQ(u);
 
 	// Power up (transmits oscillator type)
-	uint8_t x3 = (osc_freq >> 24) & 0x0FF;			// osc_freq / 0x1000000;
-	uint8_t x2 = (osc_freq >> 16) & 0x0FF;			// (osc_freq - x3 * 0x1000000) / 0x10000;
-	uint8_t x1 = (osc_freq >>  8) & 0x0FF;			// (osc_freq - x3 * 0x1000000 - x2 * 0x10000) / 0x100;
-	uint8_t x0 = (osc_freq >>  0) & 0x0FF;			// (osc_freq - x3 * 0x1000000 - x2 * 0x10000 - x1 * 0x100);
+	osc_freq = OSC_FREQ;
+	uint8_t x3 = (osc_freq >> 24) & 0x0FF;
+	uint8_t x2 = (osc_freq >> 16) & 0x0FF;
+	uint8_t x1 = (osc_freq >>  8) & 0x0FF;
+	uint8_t x0 = (osc_freq >>  0) & 0x0FF;
 	uint8_t init_command[] = {0x02, 0x01, 0x01, x3, x2, x1, x0};
-	SendCmdReceiveAnswer(init_command, 7, NULL, 7);
-
-	uint8_t command[] = {0x01};
-	uint8_t rx[9] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-	SendCmdReceiveAnswer(command, 9, rx, 9);
-
-	// Clear all pending interrupts
-	//uint8_t get_int_status_command[] = {0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	//SendCmdReceiveAnswer(get_int_status_command, 9, NULL, 9);
+	SendCmdReceiveAnswerSetDelay(init_command, 7, NULL, 7, 100);
 
 	// Set transmitter GPIOs
 	uint8_t gpio_pin_cfg_command[] = {
@@ -158,7 +147,7 @@ void SendCmdReceiveAnswerSetDelay(uint8_t* txData, uint32_t byteCountTx, uint8_t
 		delay(delays);
 }
 
-void sendFrequencyToSi406x(uint32_t freq, uint32_t shift) {
+void sendFrequencyToSi406x(uint32_t freq) {
 	// Set the output divider according to recommended ranges given in Si406x datasheet
 	uint32_t band = 0;
 	if(freq < 705000000UL) {outdiv = 6;  band = 1;};
@@ -187,7 +176,7 @@ void sendFrequencyToSi406x(uint32_t freq, uint32_t shift) {
 	uint8_t set_frequency_property_command[] = {0x11, 0x40, 0x04, 0x00, n, m2, m1, m0};
 	SendCmdReceiveAnswerSetDelay(set_frequency_property_command, 8, NULL, 8, 100);
 
-	uint32_t x = ((((uint32_t)1 << 19) * outdiv * 1300.0)/(2*OSC_FREQ(3)))*2;
+	uint32_t x = ((((uint32_t)1 << 19) * outdiv * 1300.0)/(2*OSC_FREQ))*2;
 	uint8_t x2 = (x >> 16) & 0xFF;
 	uint8_t x1 = (x >>  8) & 0xFF;
 	uint8_t x0 = (x >>  0) & 0xFF;
@@ -206,7 +195,7 @@ void setModem() {
 	SendCmdReceiveAnswer(no_sync_word, 5, NULL, 5);
 
 	// Setup the NCO modulo and oversampling mode
-	uint32_t s = OSC_FREQ(3) / 10;
+	uint32_t s = OSC_FREQ / 10;
 	uint8_t f3 = (s >> 24) & 0xFF;
 	uint8_t f2 = (s >> 16) & 0xFF;
 	uint8_t f1 = (s >>  8) & 0xFF;
@@ -262,16 +251,13 @@ void radioShutdown(void) {
  * @param shift Shift of FSK in Hz
  * @param level Transmission power level (see power level description in config file)
  */
-void radioTune(uint32_t frequency, uint32_t shift, uint8_t level) {
+void radioTune(uint32_t frequency, uint8_t level) {
 	stopTx();
-
-	if(shift < 1 || shift > 10000)
-		shift = 425;
 
 	if(frequency < 119000000UL || frequency > 1050000000UL)
 		frequency = 145300000UL;
 
-	sendFrequencyToSi406x(frequency, shift);	// Frequency
+	sendFrequencyToSi406x(frequency);	// Frequency
 	setPowerLevel(level);						// Power level
 
 	startTx();

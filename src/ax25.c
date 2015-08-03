@@ -108,7 +108,7 @@ void ax25_send_header(s_address_t addresses[], int num_addresses)
 	crc = 0xffff;
 
 	// Send sync ("a bunch of 0s")
-	for (i = 0; i < 60; i++)
+	for (i = 0; i < TX_DELAY; i++)
 	{
 		ax25_send_sync();
 	}

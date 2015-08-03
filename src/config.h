@@ -27,7 +27,7 @@
 #define TARGET				TARGET_PECAN_PICO6
 
 // APRS Source Callsign
-#define S_CALLSIGN			"DL4MDW"
+#define S_CALLSIGN			"DL7AD"
 #define S_CALLSIGN_ID		11
 
 // APRS Symbol
@@ -44,7 +44,7 @@
 //#define APRS_COMMENT		"Pecan Tracker"
 
 // TX delay in milliseconds
-#define TX_DELAY			1000
+#define TX_DELAY			60
 
 
 #define TIME_SLEEP_CYCLE	300000
@@ -54,7 +54,7 @@
 //							Range 1-127, Radio output power depends on VCC voltage.
 //							127 @ VCC=3400mV ~ 100mW
 //							20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER			50
+#define RADIO_POWER			127
 
 /* ============================================== Target definitions =============================================== */
 /* ========================= Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ========================== */
@@ -79,8 +79,8 @@
 // Oscillator frequency:	The oscillator is powered by different VCC levels and different PWM levels. So it has to
 //							be adjusted/stabilized by software depending on voltage. At the moment there are two
 //							different oscillators being used by Thomas (DL4MDW) and Sven (DL7AD)
-//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
-#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
+#define OSC_FREQ			20000000
+//#define OSC_FREQ			27000000
 
 #endif
 
