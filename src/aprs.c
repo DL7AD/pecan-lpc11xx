@@ -388,7 +388,7 @@ void display_configuration(void)
 
 	nsprintf(temp, 22, "Sleep cycle:%6dsec", TIME_SLEEP_CYCLE/1000);
 	terminal_addLine(temp);
-	nsprintf(temp, 22, "max GPS cycle:%4dsec", TIME_SLEEP_CYCLE/1000);
+	nsprintf(temp, 22, "max GPS cycle:%4dsec", TIME_MAX_GPS_SEARCH/1000);
 	terminal_addLine(temp);
 	terminal_flush();
 }
