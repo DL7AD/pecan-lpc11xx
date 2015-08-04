@@ -8,7 +8,9 @@
 }
 #define LDO_EN(Select) { \
 	if (Select) { \
-		LPC_IOCON->ADC_PIO_REF = 0xC8; /* Discharge Voltage Regulator Caps for 50ms */ \
+		LPC_IOCON->ADC_PIO_REF = 0x30; \
+		ADC_GPIO_REF->DIR |= ADC_PIN_REF; \
+		ADC_GPIO_REF->DATA &= ~ADC_PIN_REF; \
 		delay(50); \
 		LDO_GPIO_EN->DATA &= ~LDO_PIN_EN; \
 	} else { \
