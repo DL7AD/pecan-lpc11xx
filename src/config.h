@@ -160,7 +160,11 @@
 	#define USE_GPS_HW_SW						// Use Hardware switch for GPS power
 
 	#define ADC_REF				REF_VCC1V8_LDO	// ADC reference is 1.8V LDO
+
+	#define ADC_GPIO_REF		LPC_GPIO1
 	#define ADC_PIO_REF			R_PIO1_1
+	#define ADC_PIN_REF			(1 << 1)
+
 	#define ADC_AD_REF			AD2
 	#define ADC_PIO_SOLAR		R_PIO1_0
 	#define ADC_AD_SOLAR		AD1
