@@ -32,6 +32,7 @@
 #include "bmp180.h"
 #include "ssd1306.h"
 
+volatile uint32_t batt_voltage;
 
 /**
  * Enter power save mode for 8 seconds. Power save is disabled and replaced by
@@ -58,19 +59,19 @@ int main(void)
 	Init_SSD1306();
 	display_configuration();
 
+	// Configure ADC (for discharging capacitor at VCC1V8)
+	ADC_Init();
+
 	// This delay is necessary to get access again after module fell into a deep sleep state in which the reset pin is disabled !!!
 	// To get access again, its necessary to access the chip in active mode. If chip is almost every time in sleep mode, it can be
 	// only waked up by the reset pin which is (as mentioned before) disabled.
 	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
 
-	// Configure ADC (for discharging capacitor at VCC1V8)
-	ADC_Init();
-
 	// Clear terminal and display cycle start
 	terminal_clear();
 	terminal_addLine("> Start cycle");
 	terminal_flush();
-	delay(3000);
+	delay(1000);
 
 	trackingstate_t trackingstate = TRANSMIT;
 	gpsstate_t gpsstate = GPS_LOSS;
@@ -80,7 +81,7 @@ int main(void)
 
 		// Measure battery voltage
 		ADC_Init();
-		uint32_t batt_voltage = getBatteryMV();
+		batt_voltage = getBatteryMV();
 		ADC_DeInit();
 
 		// Freeze tracker when battery below specific voltage
