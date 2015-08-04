@@ -63,11 +63,14 @@ int main(void)
 	// only waked up by the reset pin which is (as mentioned before) disabled.
 	delay(10000); // !!! IMPORTANT IMPORTANT IMPORTANT !!! DO NOT REMOVE THIS DELAY UNDER ANY CIRCUMSTANCES !!!
 
+	// Configure ADC (for discharging capacitor at VCC1V8)
+	ADC_Init();
+
 	// Clear terminal and display cycle start
 	terminal_clear();
 	terminal_addLine("> Start cycle");
 	terminal_flush();
-	delay(1000);
+	delay(3000);
 
 	trackingstate_t trackingstate = TRANSMIT;
 	gpsstate_t gpsstate = GPS_LOSS;
