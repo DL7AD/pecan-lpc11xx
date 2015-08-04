@@ -104,14 +104,12 @@ void modem_flush_frame(void) {
 	packet_pos = 0;
 	current_sample_in_baud = 0;
 
-	//Target_SetClock_PLL(Fosc, TX_CPU_CLOCK);	// Configure clock to 48 MHz so modulation PWM has higher frequency
 	Modem_Init();							// Initialize timers and radio
 
 	while(modem_busy())						// Wait for radio getting finished
 		__WFI();
 
 	radioShutdown();						// Shutdown radio
-	//Target_SetClock_IRC();					// Reconfigure clock to 12 MHz
 }
 
 /**
@@ -148,8 +146,7 @@ void On_Sample_Handler(void) {
 		setLowTone();
 	}
 
-	uint32_t samplespb = SAMPLES_PER_BAUD;
-	if(++current_sample_in_baud == samplespb) {
+	if(++current_sample_in_baud == SAMPLES_PER_BAUD) {
 		current_sample_in_baud = 0;
 		packet_pos++;
 	}
