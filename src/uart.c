@@ -2,6 +2,7 @@
 #include "target.h"
 #include "uart.h"
 #include "config.h"
+#include "modem.h"
 
 #define UART_CLEAR_IR() 			{(LPC_UART->IIR >> 1) & 0x07;}
 #define UART_CLR_RXFIFO()			{LPC_UART->FCR |= (1 << 1);}
@@ -22,6 +23,9 @@ static uint32_t crit = 0;
  * Handler für UART Interrupt
  */
 void On_UART(void) {
+	if(modem_busy())
+		return; // The tracker is currently transmitting
+
 	uint8_t Data;
 	uint8_t IIRValue;
 	uint8_t LSRValue;

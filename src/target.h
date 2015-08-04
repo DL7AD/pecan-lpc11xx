@@ -34,8 +34,7 @@
 #define UART_DATA_MAXLENGTH			128
 
 // Interrupt priority
-#define INT_PRIORITY_TMR16B0		5
-#define INT_PRIORITY_TMR16B1		6
+#define INT_PRIORITY_TMR16B0		6
 #define INT_PRIORITY_I2C			7
 #define INT_PRIORITY_UART			8
 #define INT_PRIORITY_SSP			9

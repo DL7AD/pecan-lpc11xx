@@ -51,7 +51,6 @@ const uint8_t sine_table[512] = {
  */
 
 #define TX_CPU_CLOCK		12000000
-//#define REST_DUTY			127
 #define TABLE_SIZE			sizeof(sine_table)
 #define PLAYBACK_RATE		(TX_CPU_CLOCK / 256) // When transmitting CPU is switched to 48 MHz -> 187.5 kHz
 #define BAUD_RATE			1200
