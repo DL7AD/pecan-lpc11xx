@@ -2,9 +2,8 @@
 #include "modem.h"
 #include "target.h"
 #include "global.h"
-
-// only include the selected radio
 #include "Si446x.h"
+#include "gps.h"
 
 uint32_t radio_frequency = 0;
 uint8_t radio_power = 0;
@@ -103,12 +102,16 @@ void modem_flush_frame(void) {
 	packet_pos = 0;
 	current_sample_in_baud = 0;
 
+	if(gpsIsOn())
+		GPS_hibernate_uart();				// Hibernate UART because it would interrupt the modulation
 	Modem_Init();							// Initialize timers and radio
 
 	while(modem_busy())						// Wait for radio getting finished
 		__WFI();
 
 	radioShutdown();						// Shutdown radio
+	if(gpsIsOn())
+		GPS_wake_uart();					// Init UART again to continue GPS decoding
 }
 
 /**

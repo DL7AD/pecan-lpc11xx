@@ -358,6 +358,14 @@ void GPS_Init() {
 	GPS_PowerOn();							// Init GPS
 }
 
+void GPS_hibernate_uart(void) {
+	UART_DeInit();							// Stop UART
+}
+
+void GPS_wake_uart(void) {
+	UART_Init(GPS_BAUDRATE);				// Init UART
+}
+
 void GPS_PowerOff(void) {
 	#ifdef USE_GPS_HW_SW
 	gps_hw_switch(false);					// Power down GPS

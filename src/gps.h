@@ -38,6 +38,8 @@ extern uint8_t time2lock;
 extern gps_t lastFix;
 
 void GPS_Init();
+void GPS_hibernate_uart(void);
+void GPS_wake_uart(void);
 void GPS_PowerOff(void);
 void GPS_PowerOn(void);
 void gps_set_nmeaCompatibility();

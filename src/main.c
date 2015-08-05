@@ -32,8 +32,6 @@
 #include "bmp180.h"
 #include "ssd1306.h"
 
-volatile uint32_t batt_voltage;
-
 /**
  * Enter power save mode for 8 seconds. Power save is disabled and replaced by
  * delay function in debug mode to avoid stopping SWD interface.
@@ -81,7 +79,7 @@ int main(void)
 
 		// Measure battery voltage
 		ADC_Init();
-		batt_voltage = getBatteryMV();
+		uint32_t batt_voltage = getBatteryMV();
 		ADC_DeInit();
 
 		// Freeze tracker when battery below specific voltage
