@@ -28,7 +28,7 @@
 
 // APRS Source Callsign
 #define S_CALLSIGN			"DL7AD"
-#define S_CALLSIGN_ID		11
+#define S_CALLSIGN_ID		12
 
 // APRS Symbol
 #define APRS_SYMBOL_TABLE	'/' // Default table
@@ -79,8 +79,8 @@
 // Oscillator frequency:	The oscillator is powered by different VCC levels and different PWM levels. So it has to
 //							be adjusted/stabilized by software depending on voltage. At the moment there are two
 //							different oscillators being used by Thomas (DL4MDW) and Sven (DL7AD)
-//#define OSC_FREQ			20000000
-#define OSC_FREQ			27000000
+//#define OSC_FREQ			19999400
+#define OSC_FREQ			26999000
 
 #endif
 
@@ -96,7 +96,7 @@
 // Battery Type:			Pecan Femto can be only powered by a primary battery (it has no solar charger)
 
 // Oscillator frequency:	Pecan Femto has a stable oscillator
-#define OSC_FREQ(u)			26000000
+#define OSC_FREQ			26000000
 
 #endif
 
