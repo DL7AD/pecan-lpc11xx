@@ -358,6 +358,14 @@ void GPS_Init() {
 	GPS_PowerOn();							// Init GPS
 }
 
+void GPS_hibernate_uart(void) {
+	UART_DeInit();							// Stop UART
+}
+
+void GPS_wake_uart(void) {
+	UART_Init(GPS_BAUDRATE);				// Init UART
+}
+
 void GPS_PowerOff(void) {
 	#ifdef USE_GPS_HW_SW
 	gps_hw_switch(false);					// Power down GPS
@@ -624,14 +632,10 @@ uint32_t gps_get_region_frequency()
 	// regions with APRS activity on APRS.fi and look up the used frequencies on the web. Any corrections or additions are welcome. Please email
 	// your suggestions to thomas@tkrahn.com
 
-	// use your own coordinates for testing; Comment out when testing is finished!
-	//  if(29.7252 < gps_lat && gps_lat < 29.7261 && -95.5082 < gps_lon && gps_lon < -95.5074) frequency = MX146_FREQUENCY_TESTING; // KT5TK home
-	//if(29.7353 < gps_lat && gps_lat < 29.7359 && -95.5397 < gps_lon && gps_lon < -95.5392) frequency = MX146_FREQUENCY_TESTING; // Gessner BBQ
-
-	// Note: Never define a region that spans the date line! Use two regions instead.
+	// Note: Never define a region that spans the date line! Use two regions instead
 
 	// switch to default when we don't have a GPS lease
-	if(lastFix.latitude == 0 && lastFix.longitude == 0) frequency = DEFAULT_FREQUENCY; // TODO: This might not work because lastFix is not updated when GPS is lost
+	if(lastFix.latitude == 0 && lastFix.longitude == 0) frequency = DEFAULT_FREQUENCY;
 
 	return frequency;
 }

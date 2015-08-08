@@ -1,13 +1,12 @@
 #include "config.h"
 #include "adc.h"
 #include "global.h"
-#include "ldo.h"
 
 void ADC_Init(void) {
 	// Enable LDO for reference voltage (only needed if VCC voltage unknown)
 	#if ADC_REF == REF_VCC1V8_LDO
-	LDO_INIT();
-	LDO_EN(true);
+	LPC_IOCON->LDO_PIO_EN = 0x30;
+	LDO_GPIO_EN->DATA &= ~LDO_PIN_EN;
 	#endif
 
 	LPC_SYSCON->PDRUNCFG		&= ~(1<<4);		// Power up ADC
@@ -26,16 +25,9 @@ void ADC_Init(void) {
 	#endif
 
 	LPC_ADC->CR = 0x0B01; // Configure ADC block to max. accuracy
-
-	#if ADC_REF == REF_VCC1V8_LDO
-	delay(10); // Wait for LDO to establish LDO output voltage
-	#endif
 }
 
 void ADC_DeInit(void) {
-	#if ADC_REF == REF_VCC1V8_LDO
-	LDO_EN(false);								// Power down LDO
-	#endif
 	LPC_SYSCON->PDRUNCFG        |= 1<<4;		// Power down ADC
 	LPC_SYSCON->SYSAHBCLKCTRL   &= ~(1<<13);	// Disable ADC clock
 }

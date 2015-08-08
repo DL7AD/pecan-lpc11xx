@@ -21,40 +21,40 @@
 #include "defines.h"
 #include "LPC11xx.h"
 
-// Type of Pecan:
+// Type of Pecan
 //							TARGET_PECAN_PICO6    for Pecan Pico 6
 //							TARGET_PECAN_FEMTO2_1 for Pecan Femto 2.1
-#define TARGET				TARGET_PECAN_FEMTO2_1
+#define TARGET				TARGET_PECAN_PICO6
 
 // APRS Source Callsign
 #define S_CALLSIGN			"DL7AD"
 #define S_CALLSIGN_ID		12
 
 // APRS Symbol
-#define APRS_SYMBOL_TABLE	'/' // Default table
-#define APRS_SYMBOL_ID		'O' // O = Balloon
+#define APRS_SYMBOL_TABLE	'/'
+#define APRS_SYMBOL_ID		'O'
 
 // APRS Digipeating paths (comment this out, if not used)
 #define DIGI_PATH1			"WIDE1"
 #define DIGI_PATH1_TTL		1
-//#define DIGI_PATH2		"WIDE1"
-//#define DIGI_PATH2_TTL	1
+#define DIGI_PATH2			"WIDE1"
+#define DIGI_PATH2_TTL		1
 
 // APRS comment (comment this out, if not used)
 //#define APRS_COMMENT		"Pecan Tracker"
 
 // TX delay in milliseconds
-#define TX_DELAY			300
+#define TX_DELAY			60
 
 
-#define TIME_SLEEP_CYCLE	120000
+#define TIME_SLEEP_CYCLE	300000
 #define TIME_MAX_GPS_SEARCH	120000
 
 // Radio power:				Radio power (for Si4464)
 //							Range 1-127, Radio output power depends on VCC voltage.
 //							127 @ VCC=3400mV ~ 100mW
 //							20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER			50
+#define RADIO_POWER			20
 
 /* ============================================== Target definitions =============================================== */
 /* ========================= Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ========================== */
@@ -79,8 +79,8 @@
 // Oscillator frequency:	The oscillator is powered by different VCC levels and different PWM levels. So it has to
 //							be adjusted/stabilized by software depending on voltage. At the moment there are two
 //							different oscillators being used by Thomas (DL4MDW) and Sven (DL7AD)
-//#define OSC_FREQ(u)			((u*623/1024)+19997384)	// Oscillator frequency 20MHz !R10=3k3k!
-#define OSC_FREQ(u)			((u*3024/1024)+26990164)	// Oscillator frequency 27MHz !R10=10k!
+//#define OSC_FREQ			19999400
+#define OSC_FREQ			26992900
 
 #endif
 
@@ -96,7 +96,7 @@
 // Battery Type:			Pecan Femto can be only powered by a primary battery (it has no solar charger)
 
 // Oscillator frequency:	Pecan Femto has a stable oscillator
-#define OSC_FREQ(u)			26000000
+#define OSC_FREQ			26000000
 
 #endif
 
@@ -160,7 +160,11 @@
 	#define USE_GPS_HW_SW						// Use Hardware switch for GPS power
 
 	#define ADC_REF				REF_VCC1V8_LDO	// ADC reference is 1.8V LDO
+
+	#define ADC_GPIO_REF		LPC_GPIO1
 	#define ADC_PIO_REF			R_PIO1_1
+	#define ADC_PIN_REF			(1 << 1)
+
 	#define ADC_AD_REF			AD2
 	#define ADC_PIO_SOLAR		R_PIO1_0
 	#define ADC_AD_SOLAR		AD1
@@ -198,7 +202,7 @@
 	#define VCXO_PIO_EN			PIO0_3
 	#define VCXO_PIN_EN			(1 << 3)
 
-	#define VCXO_PIO_CTRL		PIO0_11
+	#define VCXO_PIO_CTRL		R_PIO0_11
 	#define VCXO_MR_CTRL		MR3
 	#define VCXO_VAL			0x3
 
@@ -239,8 +243,8 @@
 #endif
 
 #if BATTERY_TYPE == SECONDARY
-	#define VOLTAGE_NOGPS		2600			// Don't switch on GPS below this voltage (Telemetry transmission only)
-	#define VOLTAGE_NOTRANSMIT	2500			// Don't transmit below this voltage
+	#define VOLTAGE_NOGPS		2500			// Don't switch on GPS below this voltage (Telemetry transmission only)
+	#define VOLTAGE_NOTRANSMIT	2300			// Don't transmit below this voltage
 	#define VOLTAGE_GPS_MAXDROP 100				// Max. Battery drop voltage until GPS is switched off while acquisition
 												// Example: VOLTAGE_NOGPS = 2700 & VOLTAGE_GPS_MAXDROP = 100 => GPS will be switched
 												// off at 2600mV, GPS will not be switched on if battery voltage already below 2700mV

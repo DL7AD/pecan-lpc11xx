@@ -96,6 +96,12 @@
 							<inputType id="com.crt.advproject.compiler.input.142984272" superClass="com.crt.advproject.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="com.crt.advproject.config.exe.debug.976665450.939979677" name="main.c" rcbsApplicability="disable" resourcePath="src/main.c" toolsToInvoke="com.crt.advproject.gcc.exe.debug.483426730.44205408">
+						<tool id="com.crt.advproject.gcc.exe.debug.483426730.44205408" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.debug.483426730">
+							<option id="com.crt.advproject.gcc.exe.debug.option.optimization.level.2055452134" superClass="com.crt.advproject.gcc.exe.debug.option.optimization.level" value="gnu.c.optimization.level.none" valueType="enumerated"/>
+							<inputType id="com.crt.advproject.compiler.input.571280040" superClass="com.crt.advproject.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>

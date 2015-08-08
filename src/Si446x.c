@@ -1,3 +1,9 @@
+/**
+ * Si4464 driver specialized for APRS transmissions. Modulation concept has been taken
+ * from Stefan Biereigel DK3SB.
+ * @see http://www.github.com/thasti/utrak
+ */
+
 #include "target.h"
 #include "Si446x.h"
 #include "config.h"
@@ -25,11 +31,6 @@
 										else \
 											VCXO_GPIO_EN->DATA &= ~VCXO_PIN_EN; \
 									}
-
-
-
-static uint32_t outdiv = 4;
-uint32_t osc_freq;
 
 /**
  * Initializes Si406x transceiver chip. Adjustes the frequency which is shifted by variable
@@ -62,37 +63,23 @@ bool Si406x_Init(void) {
 
 	delay(1);											// Wait for transmitter to power up
 
-	// Measure temperature for determine oscillator frequency
-	ADC_Init();
-	uint32_t u = getBatteryMV();
-	ADC_DeInit();
-	osc_freq = OSC_FREQ(u);
-
 	// Power up (transmits oscillator type)
-	uint8_t x3 = (osc_freq >> 24) & 0x0FF;			// osc_freq / 0x1000000;
-	uint8_t x2 = (osc_freq >> 16) & 0x0FF;			// (osc_freq - x3 * 0x1000000) / 0x10000;
-	uint8_t x1 = (osc_freq >>  8) & 0x0FF;			// (osc_freq - x3 * 0x1000000 - x2 * 0x10000) / 0x100;
-	uint8_t x0 = (osc_freq >>  0) & 0x0FF;			// (osc_freq - x3 * 0x1000000 - x2 * 0x10000 - x1 * 0x100);
+	uint8_t x3 = (OSC_FREQ >> 24) & 0x0FF;
+	uint8_t x2 = (OSC_FREQ >> 16) & 0x0FF;
+	uint8_t x1 = (OSC_FREQ >>  8) & 0x0FF;
+	uint8_t x0 = (OSC_FREQ >>  0) & 0x0FF;
 	uint8_t init_command[] = {0x02, 0x01, 0x01, x3, x2, x1, x0};
-	SendCmdReceiveAnswer(init_command, 7, NULL, 7);
-
-	uint8_t command[] = {0x01};
-	uint8_t rx[9] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-	SendCmdReceiveAnswer(command, 9, rx, 9);
-
-	// Clear all pending interrupts
-	uint8_t get_int_status_command[] = {0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	SendCmdReceiveAnswer(get_int_status_command, 9, NULL, 9);
+	SendCmdReceiveAnswerSetDelay(init_command, 7, NULL, 7, 100);
 
 	// Set transmitter GPIOs
 	uint8_t gpio_pin_cfg_command[] = {
 		0x13,	// Command type = GPIO settings
-		0x04,	// GPIO0        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
-		0x02,	// GPIO1        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
-		0x02,	// GPIO2        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
-		0x03,	// GPIO3        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
-		0x08,	// NIRQ
-		0x11,	// SDO
+		0x44,	// GPIO0        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
+		0x00,	// GPIO1        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
+		0x00,	// GPIO2        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
+		0x00,	// GPIO3        0 - PULL_CTL[1bit] - GPIO_MODE[6bit]
+		0x00,	// NIRQ
+		0x00,	// SDO
 		0x00	// GEN_CONFIG
 	};
 	SendCmdReceiveAnswer(gpio_pin_cfg_command, 8, NULL, 8);
@@ -152,9 +139,10 @@ void SendCmdReceiveAnswerSetDelay(uint8_t* txData, uint32_t byteCountTx, uint8_t
 		delay(delays);
 }
 
-void sendFrequencyToSi406x(uint32_t freq, uint32_t shift) {
+void sendFrequencyToSi406x(uint32_t freq) {
 	// Set the output divider according to recommended ranges given in Si406x datasheet
 	uint32_t band = 0;
+	uint32_t outdiv;
 	if(freq < 705000000UL) {outdiv = 6;  band = 1;};
 	if(freq < 525000000UL) {outdiv = 8;  band = 2;};
 	if(freq < 353000000UL) {outdiv = 12; band = 3;};
@@ -167,7 +155,7 @@ void sendFrequencyToSi406x(uint32_t freq, uint32_t shift) {
 	SendCmdReceiveAnswerSetDelay(set_band_property_command, 5, NULL, 5, 100);
 
 	// Set the PLL parameters
-	uint32_t f_pfd = 2 * osc_freq / outdiv;
+	uint32_t f_pfd = 2 * OSC_FREQ / outdiv;
 	uint32_t n = ((uint32_t)(freq / f_pfd)) - 1;
 	float ratio = (float)freq / (float)f_pfd;
 	float rest  = ratio - (float)n;
@@ -177,43 +165,52 @@ void sendFrequencyToSi406x(uint32_t freq, uint32_t shift) {
 	uint32_t m1 = (m - m2 * 0x10000) >> 8;
 	uint32_t m0 = (m - m2 * 0x10000 - (m1 << 8));
 
-	uint32_t channel_increment = 524288 * outdiv * shift / (2 * osc_freq);
-	uint8_t c1 = channel_increment >> 8;
-	uint8_t c0 = channel_increment - (0x100 * c1);
-
 	// Transmit frequency to chip
-	uint8_t set_frequency_property_command[] = {0x11, 0x40, 0x06, 0x00, n, m2, m1, m0, c1, c0};
-	SendCmdReceiveAnswerSetDelay(set_frequency_property_command, 10, NULL, 10, 100);
+	uint8_t set_frequency_property_command[] = {0x11, 0x40, 0x04, 0x00, n, m2, m1, m0};
+	SendCmdReceiveAnswerSetDelay(set_frequency_property_command, 8, NULL, 8, 100);
+
+	uint32_t x = ((((uint32_t)1 << 19) * outdiv * 1300.0)/(2*OSC_FREQ))*2;
+	uint8_t x2 = (x >> 16) & 0xFF;
+	uint8_t x1 = (x >>  8) & 0xFF;
+	uint8_t x0 = (x >>  0) & 0xFF;
+	uint8_t set_deviation[] = {0x11, 0x20, 0x03, 0x0a, x2, x1, x0};
+	SendCmdReceiveAnswerSetDelay(set_deviation, 7, NULL, 7, 100);
 }
 
-void setModem(void) {
-	uint8_t set_modem_mod_type_command[] = {
-		0x11,		// Set property command
-		0x20,		// Group
-		0x01,		// Number of groups
-		0x00,		// Start of property
-		0b10001010	// Property
-					// [7  ] TX_DIRECT_MODE_TYPE
-					// [6:5] TX_DIRECT_MODE_GPIO (GPIO number)
-					// [4:3] MOD_SOURCE
-					// [2:0] MOD_TYPE
-	};
-	SendCmdReceiveAnswer(set_modem_mod_type_command, 5, NULL, 5);
-}
+void setModem() {
 
+	// Disable preamble
+	uint8_t disable_preamble[] = {0x11, 0x10, 0x01, 0x00, 0x00};
+	SendCmdReceiveAnswer(disable_preamble, 5, NULL, 5);
 
-void setDeviation(uint32_t deviation) {
-	float units_per_hz = ((float)(0x40000*outdiv)) / ((float)osc_freq);
+	// Do not transmit sync word
+	uint8_t no_sync_word[] = {0x11, 0x11, 0x01, 0x11, (0x01 << 7)};
+	SendCmdReceiveAnswer(no_sync_word, 5, NULL, 5);
 
-	// Set deviation for RTTY
-	uint32_t modem_freq_dev = (unsigned long)(units_per_hz * deviation / 2.0 );
-	uint32_t mask = 0b11111111;
-	uint8_t modem_freq_dev_0 = mask & modem_freq_dev;
-	uint8_t modem_freq_dev_1 = mask & (modem_freq_dev >> 8);
-	uint8_t modem_freq_dev_2 = mask & (modem_freq_dev >> 16);
+	// Setup the NCO modulo and oversampling mode
+	uint32_t s = OSC_FREQ / 10;
+	uint8_t f3 = (s >> 24) & 0xFF;
+	uint8_t f2 = (s >> 16) & 0xFF;
+	uint8_t f1 = (s >>  8) & 0xFF;
+	uint8_t f0 = (s >>  0) & 0xFF;
+	uint8_t setup_oversampling[] = {0x11, 0x20, 0x04, 0x06, f3, f2, f1, f0};
+	SendCmdReceiveAnswer(setup_oversampling, 8, NULL, 8);
 
-	uint8_t set_modem_freq_dev_command[] = {0x11, 0x20, 0x03, 0x0A, modem_freq_dev_2, modem_freq_dev_1, modem_freq_dev_0};
-	SendCmdReceiveAnswer(set_modem_freq_dev_command, 7, NULL, 7);
+	// setup the NCO data rate for APRS
+	uint8_t setup_data_rate[] = {0x11, 0x20, 0x03, 0x03, 0x00, 0x11, 0x30};
+	SendCmdReceiveAnswer(setup_data_rate, 7, NULL, 7);
+
+	// use 2GFSK from async GPIO0
+	uint8_t use_2gfsk[] = {0x11, 0x20, 0x01, 0x00, 0x0B};
+	SendCmdReceiveAnswer(use_2gfsk, 5, NULL, 5);
+
+	// Set AFSK filter
+	uint8_t coeff[] = {0x81, 0x9f, 0xc4, 0xee, 0x18, 0x3e, 0x5c, 0x70, 0x76};
+	uint8_t i;
+	for(i=0; i<sizeof(coeff); i++) {
+		uint8_t msg[] = {0x11, 0x20, 0x01, 0x17-i, coeff[i]};
+		SendCmdReceiveAnswer(msg, 5, NULL, 5);
+	}
 }
 
 void setPowerLevel(uint8_t level) {
@@ -247,28 +244,18 @@ void radioShutdown(void) {
  * @param shift Shift of FSK in Hz
  * @param level Transmission power level (see power level description in config file)
  */
-void radioTune(uint32_t frequency, uint32_t shift, uint8_t level) {
+void radioTune(uint32_t frequency, uint8_t level) {
 	stopTx();
-
-	if(shift < 1 || shift > 10000)
-		shift = 425;
 
 	if(frequency < 119000000UL || frequency > 1050000000UL)
 		frequency = 145300000UL;
 
-	sendFrequencyToSi406x(frequency, shift);	// Frequency
-	setDeviation(shift);						// Shift
-	setPowerLevel(level);						// Power level
+	sendFrequencyToSi406x(frequency);	// Frequency
+	setPowerLevel(level);				// Power level
 
 	startTx();
 }
 
-void setHighTone(void) {
-	RF_SHIFT_SET(HIGH);
+inline void setGPIO(bool s) {
+	RF_SHIFT_SET(s);
 }
-
-void setLowTone(void) {
-	RF_SHIFT_SET(LOW);
-}
-
-
