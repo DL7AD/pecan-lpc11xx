@@ -23,8 +23,6 @@
 
 void transmit_telemetry(void);
 void transmit_position(gpsstate_t gpsstate);
-uint32_t addtime(uint32_t original, uint32_t seconds2add);
-void configure_transmitter(void);
 void display_configuration(void);
 
 #endif
