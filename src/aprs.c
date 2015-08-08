@@ -48,53 +48,57 @@ s_address_t addresses[] =
 };
 
 /**
- * Transmit APRS telemetry packet
+ * Transmit APRS telemetry packet. The packet contain following values:
+ * - Battery voltage in mV (has to be multiplied by 16, val=185 => 2960mV)
+ * - Temperature in celcius (100 has to be subtracted, val=104 => 4 celcius)
+ * - Altitude in feet (has to be multiplied by 1000, val=26 => 26000ft)
+ * - Solar voltage in mV (has to be multiplied by 8, val=123 => 984mV)
+ * - TTFF in seconds
+ * Therafter is bitwise encoding:
+ * - [7:4] Number of cycles where GPS has been lost
+ * - [3:0] unused
  */
 void transmit_telemetry(void)
 {
 	char temp[12];
 	int16_t value;
-	int8_t bmp180temp = 0;
 
-	#ifdef BMP180_AVAIL
-	BMP180_Init();
-	bmp180temp = getTemperature() / 10;	// Read temperature in degree celcius
-	BMP180_DeInit();
-	#endif
-
-	// Send a telemetry package
+	// Encode telemetry header
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
-	ax25_send_string("T#");                // Telemetry Report
+	ax25_send_string("T#");
 	telemetry_counter++;
 	if (telemetry_counter > 255) {
 		telemetry_counter = 0;
 	}
 	nsprintf(temp, 4, "%03d", telemetry_counter);
-	ax25_send_string(temp);              // sequential id
+	ax25_send_string(temp);
 	ax25_send_byte(',');
 
-	// adc0 = Battery Voltage ; Write to T# pos 1
 	ADC_Init();	// Initialize ADCs
+
+	// Encode battery voltage
 	nsprintf(temp, 4, "%03d", getBattery8bit());
 	ax25_send_string(temp);               // write 8 bit ADC value
 	ax25_send_byte(',');
 
-
-	// Temperature (+100 deg C for all positive values); Write to T# pos 2
+	// Encode temperature
+	#ifdef BMP180_AVAIL
+	BMP180_Init();
+	int8_t bmp180temp = getTemperature() / 10;	// Read temperature in degree celcius
+	BMP180_DeInit();
+	#else
+	int8_t bmp180temp = 0;
+	#endif
 	nsprintf(temp, 4, "%03d", (int)(bmp180temp + 100));
 	ax25_send_string(temp);
 	ax25_send_byte(',');
 
-
-	// fill the 3rd telemetry value with a number that's proportional to the altitude:
+	// Encode altitude
 	nsprintf(temp, 4, "%03d", METER_TO_FEET(lastFix.altitude)/1000); // Altitude in kfeet; Must be > 0, therefore abs()
 	ax25_send_string(temp);               // write 8 bit value
 	ax25_send_byte(',');
 
-
-
-
-	// adc6 = Usolar; Write to T# pos 4
+	// Encode solar voltage
 	#ifdef SOLAR_AVAIL
 	value = getSolar8bit();
 	#else
@@ -105,18 +109,16 @@ void transmit_telemetry(void)
 	ax25_send_string(temp);
 	ax25_send_byte(',');
 
-
-
-	// Time to first fix
+	// Encode TTFF (time to first fix)
 	nsprintf(temp, 4, "%03d", lastFix.time2lock); // TTFF in seconds
 	ax25_send_string(temp);
 	ax25_send_byte(',');
 
-	// Here the APRS telemetry specification requires a 8 character long "binary" string
-	// consisting of "1" or "0" characters
+	// Encode bitwise
+	// [7:4] Number of cycles where GPS has been lost
+	// [3:0] unused
 
-	// We'll encode the GPS loss counter in the next 4 bits
-	// loss_of_gps_counter: 0 .. 14, (15 or more)
+	// Encode count of GPS losses
 	int z;
 	for (z = 8; z > 0; z >>= 1) {
 		if ((loss_of_gps_counter & z) == z) {
@@ -149,12 +151,18 @@ void transmit_telemetry(void)
 }
 
 /**
- * Transmit APRS position packet
+ * Transmit APRS position packet. The comments are filled with:
+ * - Static comment (can be set in config.h)
+ * - Battery voltage in mV
+ * - Solar voltage in mW (if tracker is solar-enabled)
+ * - Temperature in Celcius
+ * - Air pressure in Pascal
+ * - Number of satellites being used
+ * - Number of cycles where GPS has been lost (if applicable in cycle)
  */
 void transmit_position(gpsstate_t gpsstate)
 {
 	char temp[22];
-	//float altitude = 0;
 	int8_t bmp180temp = 0;
 	int32_t bmp180pressure = 0;
 
