@@ -5,9 +5,6 @@
 #include "Si446x.h"
 #include "gps.h"
 
-uint32_t radio_frequency = 0;
-uint8_t radio_power = 0;
-
 // Sine table
 const uint8_t sine_table[512] = {
 	127, 129, 130, 132, 133, 135, 136, 138, 139, 141, 143, 144, 146, 147, 149, 150, 152, 153, 155, 156, 158,
@@ -79,8 +76,8 @@ void Modem_Init(void)
 	// Initialize radio
 	Si406x_Init();
 
-	// Key the radio
-	radioTune(radio_frequency, radio_power);
+	// Set radio power and frequency
+	radioTune(gps_get_region_frequency(), RADIO_POWER);
 
 	// Setup sampling timer
 	LPC_SYSCON->SYSAHBCLKCTRL |= (1<<7);	// Enable TIMER16_0 clock
@@ -142,11 +139,7 @@ void On_Sample_Handler(void) {
 
 	phase += phase_delta;
 
-	if(sine_table[(phase >> 7) & (TABLE_SIZE - 1)] > 127) {
-		setHighTone();
-	} else {
-		setLowTone();
-	}
+	setGPIO(sine_table[(phase >> 7) & (TABLE_SIZE - 1)] > 127);
 
 	if(++current_sample_in_baud == SAMPLES_PER_BAUD) {
 		current_sample_in_baud = 0;
@@ -154,12 +147,4 @@ void On_Sample_Handler(void) {
 	}
 
 	LPC_TMR16B0->IR = 0x01; // Clear interrupt
-}
-
-void modem_set_tx_freq(uint32_t frequency) {
-	radio_frequency = frequency;
-}
-
-void modem_set_tx_power(uint8_t power) {
-	radio_power = power;
 }

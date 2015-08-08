@@ -32,11 +32,6 @@
 											VCXO_GPIO_EN->DATA &= ~VCXO_PIN_EN; \
 									}
 
-
-
-static uint32_t outdiv = 4;
-uint32_t osc_freq;
-
 /**
  * Initializes Si406x transceiver chip. Adjustes the frequency which is shifted by variable
  * oscillator voltage.
@@ -68,14 +63,11 @@ bool Si406x_Init(void) {
 
 	delay(1);											// Wait for transmitter to power up
 
-	// Measure temperature for determine oscillator frequency
-
 	// Power up (transmits oscillator type)
-	osc_freq = OSC_FREQ;
-	uint8_t x3 = (osc_freq >> 24) & 0x0FF;
-	uint8_t x2 = (osc_freq >> 16) & 0x0FF;
-	uint8_t x1 = (osc_freq >>  8) & 0x0FF;
-	uint8_t x0 = (osc_freq >>  0) & 0x0FF;
+	uint8_t x3 = (OSC_FREQ >> 24) & 0x0FF;
+	uint8_t x2 = (OSC_FREQ >> 16) & 0x0FF;
+	uint8_t x1 = (OSC_FREQ >>  8) & 0x0FF;
+	uint8_t x0 = (OSC_FREQ >>  0) & 0x0FF;
 	uint8_t init_command[] = {0x02, 0x01, 0x01, x3, x2, x1, x0};
 	SendCmdReceiveAnswerSetDelay(init_command, 7, NULL, 7, 100);
 
@@ -150,6 +142,7 @@ void SendCmdReceiveAnswerSetDelay(uint8_t* txData, uint32_t byteCountTx, uint8_t
 void sendFrequencyToSi406x(uint32_t freq) {
 	// Set the output divider according to recommended ranges given in Si406x datasheet
 	uint32_t band = 0;
+	uint32_t outdiv;
 	if(freq < 705000000UL) {outdiv = 6;  band = 1;};
 	if(freq < 525000000UL) {outdiv = 8;  band = 2;};
 	if(freq < 353000000UL) {outdiv = 12; band = 3;};
@@ -162,7 +155,7 @@ void sendFrequencyToSi406x(uint32_t freq) {
 	SendCmdReceiveAnswerSetDelay(set_band_property_command, 5, NULL, 5, 100);
 
 	// Set the PLL parameters
-	uint32_t f_pfd = 2 * osc_freq / outdiv;
+	uint32_t f_pfd = 2 * OSC_FREQ / outdiv;
 	uint32_t n = ((uint32_t)(freq / f_pfd)) - 1;
 	float ratio = (float)freq / (float)f_pfd;
 	float rest  = ratio - (float)n;
@@ -258,17 +251,11 @@ void radioTune(uint32_t frequency, uint8_t level) {
 		frequency = 145300000UL;
 
 	sendFrequencyToSi406x(frequency);	// Frequency
-	setPowerLevel(level);						// Power level
+	setPowerLevel(level);				// Power level
 
 	startTx();
 }
 
-inline void setHighTone(void) {
-	RF_SHIFT_SET(HIGH);
+inline void setGPIO(bool s) {
+	RF_SHIFT_SET(s);
 }
-
-inline void setLowTone(void) {
-	RF_SHIFT_SET(LOW);
-}
-
-

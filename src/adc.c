@@ -25,10 +25,6 @@ void ADC_Init(void) {
 	#endif
 
 	LPC_ADC->CR = 0x0B01; // Configure ADC block to max. accuracy
-
-	#if ADC_REF == REF_VCC1V8_LDO
-	delay(10); // Wait for LDO to establish LDO output voltage
-	#endif
 }
 
 void ADC_DeInit(void) {

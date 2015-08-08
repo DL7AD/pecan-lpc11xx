@@ -21,7 +21,7 @@
 #include "defines.h"
 #include "LPC11xx.h"
 
-// Type of Pecan:
+// Type of Pecan
 //							TARGET_PECAN_PICO6    for Pecan Pico 6
 //							TARGET_PECAN_FEMTO2_1 for Pecan Femto 2.1
 #define TARGET				TARGET_PECAN_PICO6
@@ -31,14 +31,14 @@
 #define S_CALLSIGN_ID		12
 
 // APRS Symbol
-#define APRS_SYMBOL_TABLE	'/' // Default table
-#define APRS_SYMBOL_ID		'O' // O = Balloon
+#define APRS_SYMBOL_TABLE	'/'
+#define APRS_SYMBOL_ID		'O'
 
 // APRS Digipeating paths (comment this out, if not used)
 #define DIGI_PATH1			"WIDE1"
 #define DIGI_PATH1_TTL		1
-//#define DIGI_PATH2		"WIDE1"
-//#define DIGI_PATH2_TTL	1
+#define DIGI_PATH2			"WIDE1"
+#define DIGI_PATH2_TTL		1
 
 // APRS comment (comment this out, if not used)
 //#define APRS_COMMENT		"Pecan Tracker"
@@ -80,7 +80,7 @@
 //							be adjusted/stabilized by software depending on voltage. At the moment there are two
 //							different oscillators being used by Thomas (DL4MDW) and Sven (DL7AD)
 //#define OSC_FREQ			19999400
-#define OSC_FREQ			26999000
+#define OSC_FREQ			26992900
 
 #endif
 

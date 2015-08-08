@@ -23,7 +23,6 @@ void startTx(void);
 void stopTx(void);
 void radioShutdown(void);
 void radioTune(uint32_t frequency, uint8_t level);
-inline void setHighTone(void);
-inline void setLowTone(void);
+inline void setGPIO(bool s);
 
 #endif
