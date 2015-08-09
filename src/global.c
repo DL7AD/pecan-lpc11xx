@@ -7,8 +7,8 @@ const uint16_t nonLeapYear[] = {0,31,59,90,120,151,181,212,243,273,304,334,365};
 const uint16_t leapYear[] = {0,31,60,91,121,152,182,213,244,274,305,335,366};
 
 /**
- * @brief Interrupt routine for SystemTick
- * This method should be called every 1ms.
+ * Interrupt routine for SystemTick. This method should be called every 1ms
+ * by Tick timer interrupt
  */
 void SysTick_Handler(void) {
 	unixTimeStamp++;
@@ -41,14 +41,13 @@ uint64_t date2UnixTimestamp(date_t time) {
 		}
 	}
 
-	return timeC * 1000 + time.millisecond;
+	return timeC * 1000;
 }
 
-date_t getUnixTimestampDecoded(void) {
+date_t unixTimestamp2Date(uint64_t time) {
 	date_t date;
-	uint64_t dateRaw = unixTimeStamp / 1000;
+	uint64_t dateRaw = time / 1000;
 
-	date.millisecond = unixTimeStamp % 1000;
 	date.year = 1970;
 	while(true)
 	{

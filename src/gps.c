@@ -293,7 +293,7 @@ void parse_lat(const char *token)
 		mins[0] = token[2];
 		mins[1] = token[3];
 		mins[2] = '\0';
-		newFix.latitude = atoi(degs) + atoi(mins) / (double)60 + atoi(token + 5) / (double)6000000;
+		newFix.latitude = atoi(degs) + atoi(mins) / (float)60 + atoi(token + 5) / (float)6000000;
 	}
 }
 
@@ -316,7 +316,7 @@ void parse_lon(const char *token)
 		mins[0] = token[3];
 		mins[1] = token[4];
 		mins[2] = '\0';
-		newFix.longitude = atoi(degs) + atoi(mins) / (double)60 + atoi(token + 6) / (double)6000000;
+		newFix.longitude = atoi(degs) + atoi(mins) / (float)60 + atoi(token + 6) / (float)6000000;
 	}
 }
 

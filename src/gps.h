@@ -23,8 +23,8 @@
 
 typedef struct {
 	date_t time;
-	double latitude;
-	double longitude;
+	float latitude;
+	float longitude;
 	uint16_t altitude;
 	uint8_t satellites;
 	uint16_t speed;

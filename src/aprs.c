@@ -181,14 +181,14 @@ void transmit_position(gpsstate_t gpsstate)
 	ADC_DeInit();
 
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
-	ax25_send_byte('@');                // Report w/ timestamp, no APRS messaging. $ = NMEA raw data
+	ax25_send_byte('/');                // Report w/ timestamp, no APRS messaging. $ = NMEA raw data
 
 	if(gpsstate != GPS_LOCK)
 	{
-		lastFix.time = getUnixTimestampDecoded(); // Replace old GPS timestamp with current time
+		lastFix.time = unixTimestamp2Date(getUnixTimestamp()); // Replace old GPS timestamp with current time
 	}
 
-	nsprintf(temp, 7, "%02d%02d%02d", lastFix.time.day, lastFix.time.hour, lastFix.time.minute);
+	nsprintf(temp, 7, "%02d%02d%02d", lastFix.time.hour, lastFix.time.minute, lastFix.time.second);
 	ax25_send_string(temp);         // 170915 = 17h:09m:15s zulu (not allowed in Status Reports)
 	ax25_send_byte('h');
 	uint16_t lat_degree = abs((int16_t)lastFix.latitude);
