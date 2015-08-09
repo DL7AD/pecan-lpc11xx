@@ -35,7 +35,7 @@
 static uint16_t telemetry_counter = 0;
 static uint16_t loss_of_gps_counter = 0;
 
-s_address_t addresses[] =
+const s_address_t addresses[] =
 { 
 	{D_CALLSIGN, D_CALLSIGN_ID},  // Destination callsign
 	{S_CALLSIGN, S_CALLSIGN_ID},  // Source callsign (-11 = balloon, -9 = car)
@@ -110,7 +110,7 @@ void transmit_telemetry(void)
 	ax25_send_byte(',');
 
 	// Encode TTFF (time to first fix)
-	nsprintf(temp, 4, "%03d", lastFix.time2lock); // TTFF in seconds
+	nsprintf(temp, 4, "%03d", lastFix.ttff); // TTFF in seconds
 	ax25_send_string(temp);
 	ax25_send_byte(',');
 
@@ -274,7 +274,7 @@ void transmit_position(gpsstate_t gpsstate)
 	} else if(gpsstate == GPS_LOW_BATT) {
 		terminal_addLine("GPS lowbatt power off");
 	} else if(gpsstate == GPS_LOCK) {
-		nsprintf(temp, 22, "GPS lock (in %d sec)", lastFix.time2lock);
+		nsprintf(temp, 22, "GPS lock (in %d sec)", lastFix.ttff);
 		terminal_addLine(temp);
 	}
 

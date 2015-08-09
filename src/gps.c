@@ -135,6 +135,9 @@ const uint8_t UBX_SAVE_SETTINGS[] = {
 };
 
 
+gps_t track[LOG_SIZE];
+
+
 // Module declarations
 static void parse_sentence_type(const char * token);
 static void parse_time(const char *token);
@@ -148,8 +151,6 @@ static void parse_lon_hemi(const char *token);
 static void parse_speed(const char *token);
 static void parse_course(const char *token);
 static void parse_altitude(const char *token);
-
-
 
 // Module types
 typedef void (*t_nmea_parser)(const char *token);
@@ -216,7 +217,7 @@ static unsigned char their_checksum = 0;
 static char token[16];
 static int16_t num_tokens = 0;
 static uint16_t offset = 0;
-bool isOn = false;
+static bool isOn = false;
 
 // Module functions
 unsigned char from_hex(char a)
@@ -642,7 +643,7 @@ uint32_t gps_get_region_frequency()
 
 void gpsSetTime2lock(uint32_t ms)
 {
-	lastFix.time2lock = ms/1000 < 255 ? ms/1000 : 255;
+	lastFix.ttff = ms/1000 < 255 ? ms/1000 : 255;
 }
 
 void gps_reset(void) {

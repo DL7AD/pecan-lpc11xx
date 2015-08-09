@@ -100,7 +100,7 @@ void ax25_send_string(const char *string)
 	}
 }
 
-void ax25_send_header(s_address_t addresses[], int num_addresses)
+void ax25_send_header(const s_address_t addresses[], int num_addresses)
 {
 	int i, j;
 	modem_packet_size = 0;

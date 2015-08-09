@@ -56,6 +56,10 @@
 //							20  @ VCC=3400mV ~ 10mW
 #define RADIO_POWER			20
 
+// Logging size:
+#define LOG_SIZE			168
+#define LOG_CYCLE_TIME		7200
+
 /* ============================================== Target definitions =============================================== */
 /* ========================= Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ========================== */
 #if TARGET == TARGET_PECAN_PICO6

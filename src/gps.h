@@ -20,6 +20,7 @@
 
 #include "types.h"
 #include "global.h"
+#include "config.h"
 
 typedef struct {
 	date_t time;
@@ -30,12 +31,11 @@ typedef struct {
 	uint16_t speed;
 	uint16_t course;
 	bool active;
-	uint8_t time2lock;
+	uint8_t ttff;
 } gps_t;
 
-extern uint32_t gps_region_frequency;
-extern uint8_t time2lock;
 extern gps_t lastFix;
+extern gps_t track[LOG_SIZE]; // Log
 
 void GPS_Init();
 void GPS_hibernate_uart(void);
