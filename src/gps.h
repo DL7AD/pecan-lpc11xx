@@ -30,12 +30,25 @@ typedef struct {
 	uint8_t satellites;
 	uint16_t speed;
 	uint16_t course;
-	bool active;
+	bool active; // has lock
 	uint8_t ttff;
 } gps_t;
 
+typedef struct {
+	uint32_t time;
+	float latitude;
+	float longitude;
+	uint16_t altitude;
+	uint8_t satellites;
+	uint8_t ttff;
+	uint8_t vbat;
+	uint8_t vsol;
+	uint8_t temp;
+	// 1byte dummy
+} track_t;
+
 extern gps_t lastFix;
-extern gps_t track[LOG_SIZE]; // Log
+extern track_t track[LOG_SIZE]; // Log
 
 void GPS_Init();
 void GPS_hibernate_uart(void);

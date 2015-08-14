@@ -170,6 +170,12 @@ int main(void)
 				// Transmit APRS position
 				transmit_position(gpsstate);
 
+				// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
+				power_save(6000);
+
+				// Transmit log packet
+				transmit_log();
+
 				// Change state depending on GPS status
 				if(gpsstate == GPS_LOCK || gpsstate == GPS_LOW_BATT) {
 					trackingstate = SLEEP;

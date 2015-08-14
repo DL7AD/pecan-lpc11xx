@@ -135,7 +135,7 @@ const uint8_t UBX_SAVE_SETTINGS[] = {
 };
 
 
-gps_t track[LOG_SIZE];
+track_t track[LOG_SIZE];
 
 
 // Module declarations

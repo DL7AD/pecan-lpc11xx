@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include "i2c.h"
 #include "ssd1306.h"
+#include "base64.h"
 
 #define METER_TO_FEET(m) (((m)*26876) / 8192)
 
@@ -63,6 +64,16 @@ void transmit_telemetry(void)
 	char temp[12];
 	int16_t value;
 
+
+	// Create log packet TODO: unfinished, here just testing
+	track[0].altitude = lastFix.altitude;
+	track[0].latitude = lastFix.latitude;
+	track[0].longitude = lastFix.longitude;
+	track[0].satellites = lastFix.satellites;
+	track[0].time = date2UnixTimestamp(lastFix.time)/1000;
+	track[0].ttff = lastFix.ttff;
+
+
 	// Encode telemetry header
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
 	ax25_send_string("T#");
@@ -77,7 +88,8 @@ void transmit_telemetry(void)
 	ADC_Init();	// Initialize ADCs
 
 	// Encode battery voltage
-	nsprintf(temp, 4, "%03d", getBattery8bit());
+	track[0].vbat = getBattery8bit();
+	nsprintf(temp, 4, "%03d", track[0].vbat);
 	ax25_send_string(temp);               // write 8 bit ADC value
 	ax25_send_byte(',');
 
@@ -89,6 +101,7 @@ void transmit_telemetry(void)
 	#else
 	int8_t bmp180temp = 0;
 	#endif
+	track[0].temp = bmp180temp;
 	nsprintf(temp, 4, "%03d", (int)(bmp180temp + 100));
 	ax25_send_string(temp);
 	ax25_send_byte(',');
@@ -105,6 +118,7 @@ void transmit_telemetry(void)
 	value = 0;
 	#endif
 	ADC_DeInit();
+	track[0].vsol = value;
 	nsprintf(temp, 4, "%03d", value);
 	ax25_send_string(temp);
 	ax25_send_byte(',');
@@ -302,6 +316,26 @@ void transmit_position(gpsstate_t gpsstate)
 	#endif
 
 	terminal_flush();
+
+	// Transmit
+	ax25_flush_frame();
+}
+
+/**
+ * Transmit APRS log packet
+ */
+void transmit_log(void)
+{
+	// Encode telemetry header
+	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
+	ax25_send_string("{{L");
+
+	// Encode log message
+	char *log = base64_encode((uint8_t*)&track[0], 19);
+	ax25_send_string(log);
+
+	// Send footer
+	ax25_send_footer();
 
 	// Transmit
 	ax25_flush_frame();

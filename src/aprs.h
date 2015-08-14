@@ -23,6 +23,7 @@
 
 void transmit_telemetry(void);
 void transmit_position(gpsstate_t gpsstate);
+void transmit_log(void);
 void display_configuration(void);
 
 #endif
