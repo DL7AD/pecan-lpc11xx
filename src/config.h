@@ -47,18 +47,19 @@
 #define TX_DELAY			60
 
 
-#define TIME_SLEEP_CYCLE	300000
-#define TIME_MAX_GPS_SEARCH	120000
+#define TIME_SLEEP_CYCLE	120
+#define TIME_MAX_GPS_SEARCH	120
 
 // Radio power:				Radio power (for Si4464)
 //							Range 1-127, Radio output power depends on VCC voltage.
 //							127 @ VCC=3400mV ~ 100mW
 //							20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER			50
+#define RADIO_POWER			5
 
 // Logging size:
-#define LOG_SIZE			168
-#define LOG_CYCLE_TIME		7200
+#define LOG_SIZE			18
+#define LOG_CYCLE_TIME		120
+#define LOG_TRX_NUM			6		// Log messages that are transmitted in one packet
 
 /* ============================================== Target definitions =============================================== */
 /* ========================= Pecan Pico 6 specific (applicable only if Pecan Pico 6 used) ========================== */
@@ -83,8 +84,8 @@
 // Oscillator frequency:	The oscillator is powered by different VCC levels and different PWM levels. So it has to
 //							be adjusted/stabilized by software depending on voltage. At the moment there are two
 //							different oscillators being used by Thomas (DL4MDW) and Sven (DL7AD)
-//#define OSC_FREQ			19997700
-#define OSC_FREQ			26992900
+#define OSC_FREQ			19997700
+//#define OSC_FREQ			26992900
 
 #endif
 

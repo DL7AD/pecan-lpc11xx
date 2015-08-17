@@ -74,6 +74,7 @@ int main(void)
 	trackingstate_t trackingstate = TRANSMIT;
 	gpsstate_t gpsstate = GPS_LOSS;
 	uint64_t timestampPointer = 0;
+	uint64_t lastLogPoint = 0;
 
 	while(true) {
 
@@ -97,7 +98,7 @@ int main(void)
 				if(batt_voltage < VOLTAGE_NOGPS && gpsIsOn()) // Tracker has low battery, so switch off GPS
 					GPS_PowerOff();
 
-				if(getUnixTimestamp()-timestampPointer >= TIME_SLEEP_CYCLE) {
+				if(getUnixTimestamp()-timestampPointer >= TIME_SLEEP_CYCLE*1000) {
 					trackingstate = SWITCH_ON_GPS;
 					continue;
 				}
@@ -141,20 +142,52 @@ int main(void)
 							#endif
 
 							// We have received and decoded our location
-							gpsSetTime2lock(getUnixTimestamp() - timestampPointer);
-							trackingstate = TRANSMIT;
+							gpsSetTime2lock((getUnixTimestamp() - timestampPointer) / 1000);
+							trackingstate = LOG;
 							gpsstate = GPS_LOCK;
 						}
 					}
 				}
 
-				if(getUnixTimestamp()-timestampPointer >= TIME_MAX_GPS_SEARCH) { // Searching for GPS took too long
+				if(getUnixTimestamp()-timestampPointer >= TIME_MAX_GPS_SEARCH*1000) { // Searching for GPS took too long
 					gpsSetTime2lock(TIME_MAX_GPS_SEARCH);
 					trackingstate = TRANSMIT;
 					gpsstate = GPS_LOSS;
 					continue;
 				}
 
+				break;
+
+			case LOG:
+				if(getUnixTimestamp()-lastLogPoint >= LOG_CYCLE_TIME*1000) { // New log point necessary
+					track_t logPoint;
+
+					logPoint.time = date2UnixTimestamp(lastFix.time)/1000;
+					logPoint.latitude = lastFix.latitude;
+					logPoint.longitude = lastFix.longitude;
+					logPoint.altitude = lastFix.altitude;
+					logPoint.satellites = lastFix.satellites;
+					logPoint.ttff = lastFix.ttff;
+
+					ADC_Init();
+					logPoint.vbat = getBattery8bit();
+					#ifdef SOLAR_AVAIL
+					logPoint.vsol = getSolar8bit();
+					#else
+					logPoint.vsol = 0;
+					#endif
+					ADC_DeInit();
+
+					#ifdef BMP180_AVAIL
+					BMP180_Init();
+					logPoint.temp = (getTemperature() / 10)+100;
+					logPoint.pressure = getPressure();
+					BMP180_DeInit();
+					#endif
+
+					logTrackPoint(logPoint);
+				}
+				trackingstate = TRANSMIT;
 				break;
 
 			case TRANSMIT:

@@ -44,11 +44,11 @@ typedef struct {
 	uint8_t vbat;
 	uint8_t vsol;
 	uint8_t temp;
+	uint32_t pressure;
 	// 1byte dummy
 } track_t;
 
 extern gps_t lastFix;
-extern track_t track[LOG_SIZE]; // Log
 
 void GPS_Init();
 void GPS_hibernate_uart(void);
@@ -68,5 +68,8 @@ void gpsSetTime2lock(uint32_t ms);
 void gps_reset(void);
 void gps_hw_switch(bool pos);
 bool gpsIsOn(void);
+
+void logTrackPoint(track_t logPoint);
+track_t* getNextLogPoint(void);
 
 #endif

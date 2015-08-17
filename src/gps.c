@@ -135,8 +135,9 @@ const uint8_t UBX_SAVE_SETTINGS[] = {
 };
 
 
-track_t track[LOG_SIZE];
-
+static track_t track[LOG_SIZE];
+static uint8_t trackPointer = 0; // Logging pointer for logging
+static uint8_t trackPointerTRX = 0; // Logging pointer for transmission
 
 // Module declarations
 static void parse_sentence_type(const char * token);
@@ -643,7 +644,7 @@ uint32_t gps_get_region_frequency()
 
 void gpsSetTime2lock(uint32_t ms)
 {
-	lastFix.ttff = ms/1000 < 255 ? ms/1000 : 255;
+	lastFix.ttff = ms < 255 ? ms : 255;
 }
 
 void gps_reset(void) {
@@ -667,8 +668,19 @@ bool gpsIsOn(void) {
 	return isOn;
 }
 
+void logTrackPoint(track_t logPoint) {
+	// Log point
+	track[trackPointer] = logPoint;
 
+	// Move tracker pointer one position foward
+	trackPointer = (trackPointer+1) % LOG_SIZE;
+}
 
+track_t* getNextLogPoint(void) {
+	track_t *logPoint = &track[trackPointerTRX];
+	trackPointerTRX = (trackPointerTRX+1) % LOG_SIZE;
+	return logPoint;
+}
 
 
 

@@ -64,16 +64,6 @@ void transmit_telemetry(void)
 	char temp[12];
 	int16_t value;
 
-
-	// Create log packet TODO: unfinished, here just testing
-	track[0].altitude = lastFix.altitude;
-	track[0].latitude = lastFix.latitude;
-	track[0].longitude = lastFix.longitude;
-	track[0].satellites = lastFix.satellites;
-	track[0].time = date2UnixTimestamp(lastFix.time)/1000;
-	track[0].ttff = lastFix.ttff;
-
-
 	// Encode telemetry header
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
 	ax25_send_string("T#");
@@ -88,21 +78,20 @@ void transmit_telemetry(void)
 	ADC_Init();	// Initialize ADCs
 
 	// Encode battery voltage
-	track[0].vbat = getBattery8bit();
-	nsprintf(temp, 4, "%03d", track[0].vbat);
+	value = getBattery8bit();
+	nsprintf(temp, 4, "%03d", value);
 	ax25_send_string(temp);               // write 8 bit ADC value
 	ax25_send_byte(',');
 
 	// Encode temperature
 	#ifdef BMP180_AVAIL
 	BMP180_Init();
-	int8_t bmp180temp = getTemperature() / 10;	// Read temperature in degree celcius
+	value = getTemperature() / 10;	// Read temperature in degree celcius
 	BMP180_DeInit();
 	#else
-	int8_t bmp180temp = 0;
+	value = 0;
 	#endif
-	track[0].temp = bmp180temp;
-	nsprintf(temp, 4, "%03d", (int)(bmp180temp + 100));
+	nsprintf(temp, 4, "%03d", (int)(value + 100));
 	ax25_send_string(temp);
 	ax25_send_byte(',');
 
@@ -118,7 +107,6 @@ void transmit_telemetry(void)
 	value = 0;
 	#endif
 	ADC_DeInit();
-	track[0].vsol = value;
 	nsprintf(temp, 4, "%03d", value);
 	ax25_send_string(temp);
 	ax25_send_byte(',');
@@ -331,8 +319,13 @@ void transmit_log(void)
 	ax25_send_string("{{L");
 
 	// Encode log message
-	char *log = base64_encode((uint8_t*)&track[0], 19);
-	ax25_send_string(log);
+	uint8_t i;
+	for(i=0; i<LOG_TRX_NUM; i++) {
+		track_t *data = getNextLogPoint();
+		uint8_t base64[BASE64LEN(sizeof(track_t))+1];
+		base64_encode(data, base64, sizeof(track_t));
+		ax25_send_string(base64);
+	}
 
 	// Send footer
 	ax25_send_footer();
@@ -374,9 +367,9 @@ void display_configuration(void)
 		terminal_addLine("Battery type:     SEC");
 	}
 
-	nsprintf(temp, 22, "Sleep cycle:%6dsec", TIME_SLEEP_CYCLE/1000);
+	nsprintf(temp, 22, "Sleep cycle:%6dsec", TIME_SLEEP_CYCLE);
 	terminal_addLine(temp);
-	nsprintf(temp, 22, "max GPS cycle:%4dsec", TIME_MAX_GPS_SEARCH/1000);
+	nsprintf(temp, 22, "max GPS cycle:%4dsec", TIME_MAX_GPS_SEARCH);
 	terminal_addLine(temp);
 	terminal_flush();
 }
