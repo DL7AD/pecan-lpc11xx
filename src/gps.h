@@ -44,8 +44,8 @@ typedef struct {
 	uint8_t vbat;
 	uint8_t vsol;
 	uint8_t temp;
-	uint32_t pressure;
 	// 1byte dummy
+	uint32_t pressure;
 } track_t;
 
 extern gps_t lastFix;
