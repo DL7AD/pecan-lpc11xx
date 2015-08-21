@@ -185,6 +185,8 @@ int main(void)
 					BMP180_DeInit();
 					#endif
 
+					lastLogPoint = getUnixTimestamp();
+
 					logTrackPoint(logPoint);
 				}
 				trackingstate = TRANSMIT;
