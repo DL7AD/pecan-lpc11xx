@@ -18,12 +18,12 @@
 #ifndef __APRS_H__
 #define __APRS_H__
 
-#include "gps.h"
+#include "log.h"
 #include "global.h"
 
-void transmit_telemetry(void);
-void transmit_position(gpsstate_t gpsstate);
-void transmit_log(void);
+void transmit_telemetry(track_t *trackPoint);
+void transmit_position(track_t *trackPoint, gpsstate_t gpsstate, uint16_t course, uint16_t speed);
+void transmit_log(track_t *trackPoint);
 void display_configuration(void);
 
 #endif

@@ -17,23 +17,20 @@
 
 #include "config.h"
 #include "ax25.h"
+#include "log.h"
 #include "gps.h"
 #include "aprs.h"
 #include "adc.h"
-#include "bmp180.h"
-#include "modem.h"
 #include "small_printf_code.h"
 #include "global.h"
 #include <string.h>
 #include <stdlib.h>
-#include "i2c.h"
 #include "ssd1306.h"
 #include "base64.h"
 
 #define METER_TO_FEET(m) (((m)*26876) / 8192)
 
 
-static uint16_t telemetry_counter = 0;
 static uint16_t loss_of_gps_counter = 0;
 
 const s_address_t addresses[] =
@@ -59,60 +56,39 @@ const s_address_t addresses[] =
  * - [7:4] Number of cycles where GPS has been lost
  * - [3:0] unused
  */
-void transmit_telemetry(void)
+void transmit_telemetry(track_t *trackPoint)
 {
 	char temp[12];
-	int16_t value;
 
 	// Encode telemetry header
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
 	ax25_send_string("T#");
-	telemetry_counter++;
-	if (telemetry_counter > 255) {
-		telemetry_counter = 0;
-	}
-	nsprintf(temp, 4, "%03d", telemetry_counter);
+	nsprintf(temp, 4, "%03d", trackPoint->id % 255);
 	ax25_send_string(temp);
 	ax25_send_byte(',');
 
-	ADC_Init();	// Initialize ADCs
-
 	// Encode battery voltage
-	value = getBattery8bit();
-	nsprintf(temp, 4, "%03d", value);
-	ax25_send_string(temp);               // write 8 bit ADC value
+	nsprintf(temp, 4, "%03d", trackPoint->vbat);
+	ax25_send_string(temp);
 	ax25_send_byte(',');
 
 	// Encode temperature
-	#ifdef BMP180_AVAIL
-	BMP180_Init();
-	value = getTemperature() / 10;	// Read temperature in degree celcius
-	BMP180_DeInit();
-	#else
-	value = 0;
-	#endif
-	nsprintf(temp, 4, "%03d", (int)(value + 100));
+	nsprintf(temp, 4, "%03d", trackPoint->temp + 100);
 	ax25_send_string(temp);
 	ax25_send_byte(',');
 
 	// Encode altitude
-	nsprintf(temp, 4, "%03d", METER_TO_FEET(lastFix.altitude)/1000); // Altitude in kfeet; Must be > 0, therefore abs()
-	ax25_send_string(temp);               // write 8 bit value
-	ax25_send_byte(',');
-
-	// Encode solar voltage
-	#ifdef SOLAR_AVAIL
-	value = getSolar8bit();
-	#else
-	value = 0;
-	#endif
-	ADC_DeInit();
-	nsprintf(temp, 4, "%03d", value);
+	nsprintf(temp, 4, "%03d", METER_TO_FEET(trackPoint->altitude)/1000);
 	ax25_send_string(temp);
 	ax25_send_byte(',');
 
-	// Encode TTFF (time to first fix)
-	nsprintf(temp, 4, "%03d", lastFix.ttff); // TTFF in seconds
+	// Encode solar voltage
+	nsprintf(temp, 4, "%03d", trackPoint->vsol);
+	ax25_send_string(temp);
+	ax25_send_byte(',');
+
+	// Encode TTFF (time to first fix in seconds)
+	nsprintf(temp, 4, "%03d", trackPoint->ttff);
 	ax25_send_string(temp);
 	ax25_send_byte(',');
 
@@ -162,81 +138,62 @@ void transmit_telemetry(void)
  * - Number of satellites being used
  * - Number of cycles where GPS has been lost (if applicable in cycle)
  */
-void transmit_position(gpsstate_t gpsstate)
+void transmit_position(track_t *trackPoint, gpsstate_t gpsstate, uint16_t course, uint16_t speed)
 {
 	char temp[22];
-	int8_t bmp180temp = 0;
-	int32_t bmp180pressure = 0;
-
-	#ifdef BMP180_AVAIL
-	BMP180_Init();
-	bmp180temp = getTemperature() / 10;	// Read temperature in degree celcius
-	bmp180pressure = getPressure();		// Read pressure in pascal
-	BMP180_DeInit();
-	#endif
-
-	ADC_Init();
-	uint16_t battery = getBatteryMV();
-	#ifdef SOLAR_AVAIL
-	uint16_t solar = getSolarMV();
-	#endif
-	ADC_DeInit();
+	date_t date = unixTimestamp2Date(trackPoint->time);
 
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
 	ax25_send_byte('/');                // Report w/ timestamp, no APRS messaging. $ = NMEA raw data
 
-	if(gpsstate != GPS_LOCK)
-	{
-		lastFix.time = unixTimestamp2Date(getUnixTimestamp()); // Replace old GPS timestamp with current time
-	}
-
-	nsprintf(temp, 7, "%02d%02d%02d", lastFix.time.hour, lastFix.time.minute, lastFix.time.second);
+	nsprintf(temp, 7, "%02d%02d%02d", date.hour, date.minute, date.second);
 	ax25_send_string(temp);         // 170915 = 17h:09m:15s zulu (not allowed in Status Reports)
 	ax25_send_byte('h');
-	uint16_t lat_degree = abs((int16_t)lastFix.latitude);
-	uint32_t lat_decimal = abs((int32_t)(lastFix.latitude*100000))%100000;
+	uint16_t lat_degree = abs((int16_t)trackPoint->latitude);
+	uint32_t lat_decimal = abs((int32_t)(trackPoint->latitude*100000))%100000;
 	uint8_t lat_minute = lat_decimal * 6 / 10000;
 	uint8_t lat_minute_dec = (lat_decimal * 6 / 100) % 100;
-	nsprintf(temp, 9, "%02d%02d.%02d%c", lat_degree, lat_minute, lat_minute_dec, lastFix.latitude>0 ? 'N' : 'S');
+	nsprintf(temp, 9, "%02d%02d.%02d%c", lat_degree, lat_minute, lat_minute_dec, trackPoint->latitude>0 ? 'N' : 'S');
 	ax25_send_string(temp);     // Lat: 38deg and 22.20 min (.20 are NOT seconds, but 1/100th of minutes)
 	ax25_send_byte(APRS_SYMBOL_TABLE);                // Symbol table
-	uint16_t lon_degree = abs((int16_t)lastFix.longitude);
-	uint32_t lon_decimal = abs((int32_t)(lastFix.longitude*100000))%100000;
+	uint16_t lon_degree = abs((int16_t)trackPoint->longitude);
+	uint32_t lon_decimal = abs((int32_t)(trackPoint->longitude*100000))%100000;
 	uint8_t lon_minute = lon_decimal * 6 / 10000;
 	uint8_t lon_minute_dec = (lon_decimal * 6 / 100) % 100;
-	nsprintf(temp, 10, "%03d%02d.%02d%c", lon_degree, lon_minute, lon_minute_dec, lastFix.longitude>0 ? 'E' : 'W');
+	nsprintf(temp, 10, "%03d%02d.%02d%c", lon_degree, lon_minute, lon_minute_dec, trackPoint->longitude>0 ? 'E' : 'W');
 
 	ax25_send_string(temp);     // Lon: 000deg and 25.80 min
 	ax25_send_byte(APRS_SYMBOL_ID);                // Symbol: /O=balloon, /-=QTH, \N=buoy
-	nsprintf(temp, 4, "%03d", lastFix.course);
+	nsprintf(temp, 4, "%03d", course);
 	ax25_send_string(temp);             // Course (degrees)
 	ax25_send_byte('/');                // and
-	nsprintf(temp, 4, "%03d", lastFix.speed);
+	nsprintf(temp, 4, "%03d", speed);
 	ax25_send_string(temp);             // speed (knots)
 	ax25_send_string("/A=");            // Altitude (feet). Goes anywhere in the comment area
-	nsprintf(temp, 7, "%06ld", METER_TO_FEET(lastFix.altitude));
+	nsprintf(temp, 7, "%06ld", METER_TO_FEET(trackPoint->altitude));
 	ax25_send_string(temp);
 	ax25_send_string(" ");
-    
-	itoa(battery, temp, 10);
+
+	uint16_t vbat = EIGHTBIT_TO_VBAT(trackPoint->vbat);
+	nsprintf(temp, 8, "%d.%02dVb ", vbat/1000, (vbat%1000)/10);
 	ax25_send_string(temp);
-	ax25_send_string("mVb ");
 
 	#ifdef SOLAR_AVAIL
-	itoa(solar, temp, 10);
+	uint16_t vsol = EIGHTBIT_TO_VSOL(trackPoint->vsol);
+	nsprintf(temp, 8, "%d.%02dVs ", vsol/1000, (vsol%1000)/10);
 	ax25_send_string(temp);
-	ax25_send_string("mVs ");
 	#endif
 
-	if (bmp180pressure > 0) {
-		ax25_send_string(itoa(bmp180temp, temp, 10));
-		ax25_send_string("C ");
+	ax25_send_string(itoa(trackPoint->temp, temp, 10));
+	ax25_send_string("C ");
 
-		ax25_send_string(itoa(bmp180pressure, temp, 10));
-		ax25_send_string("Pa ");
-	}
+	#ifdef BMP180_AVAIL
+	ax25_send_string(itoa(trackPoint->pressure, temp, 10));
+	ax25_send_string("Pa ");
+	#endif
+
 	ax25_send_string("SATS");
-	nsprintf(temp, 3, "%02d", lastFix.satellites);
+	nsprintf(temp, 3, "%02d", trackPoint->satellites);
 	ax25_send_string(temp);
 
 	#ifdef APRS_COMMENT
@@ -255,8 +212,7 @@ void transmit_position(gpsstate_t gpsstate)
 		loss_of_gps_counter++;
 		ax25_send_string(" GPS loss ");
 		nsprintf(temp, 3, "%02d", loss_of_gps_counter);
-		ax25_send_string(temp);               // write 8 bit value
-		lastFix.satellites = 0;
+		ax25_send_string(temp);
 	} else {
 		loss_of_gps_counter = 0;
 	}
@@ -274,32 +230,32 @@ void transmit_position(gpsstate_t gpsstate)
 	if(gpsstate == GPS_LOSS) {
 		terminal_addLine("GPS loss");
 	} else if(gpsstate == GPS_LOW_BATT) {
-		terminal_addLine("GPS lowbatt power off");
+		terminal_addLine("GPS lowbatt");
 	} else if(gpsstate == GPS_LOCK) {
-		nsprintf(temp, 22, "GPS lock (in %d sec)", lastFix.ttff);
+		nsprintf(temp, 22, "GPS lock (in %d sec)", trackPoint->ttff);
 		terminal_addLine(temp);
 	}
 
 	nsprintf(
 		temp, 22, "%c%02d%c%02d.%02d'%c%03d%c%02d.%02d'",
-		(lastFix.longitude < 0 ? 'S' : 'N'),
+		(trackPoint->longitude < 0 ? 'S' : 'N'),
 		lat_degree, 0xF8, lat_minute, lat_minute_dec,
-		(lastFix.latitude < 0 ? 'W' : 'E'),
+		(trackPoint->latitude < 0 ? 'W' : 'E'),
 		lon_degree, 0xF8, lon_minute, lon_minute_dec
 	);
 	terminal_addLine(temp);
 
-	nsprintf(temp, 22, "TIM %02d-%02d-%02d %02d:%02d:%02d", lastFix.time.year%100, lastFix.time.month, lastFix.time.day, lastFix.time.hour, lastFix.time.minute, lastFix.time.second);
+	nsprintf(temp, 22, "TIM %02d-%02d-%02d %02d:%02d:%02d", date.year%100, date.month, date.day, date.hour, date.minute, date.second);
 	terminal_addLine(temp);
 
-	nsprintf(temp, 22, "ALT%6d m   SATS %d", lastFix.altitude, lastFix.satellites);
+	nsprintf(temp, 22, "ALT%6d m   SATS %d", trackPoint->altitude, trackPoint->satellites);
 	terminal_addLine(temp);
 
-	nsprintf(temp, 22, "BAT%5d mV%7d %cC", battery, bmp180temp, (char)0xF8);
+	nsprintf(temp, 22, "BAT%5d mV%7d %cC", EIGHTBIT_TO_VBAT(trackPoint->vbat), trackPoint->temp, (char)0xF8);
 	terminal_addLine(temp);
 
 	#ifdef SOLAR_AVAIL
-	nsprintf(temp, 22, "SOL%5d mV%7d Pa", solar, bmp180pressure);
+	nsprintf(temp, 22, "SOL%5d mV%7d Pa", EIGHTBIT_TO_VSOL(trackPoint->vsol), trackPoint->pressure);
 	terminal_addLine(temp);
 	#endif
 
@@ -312,7 +268,7 @@ void transmit_position(gpsstate_t gpsstate)
 /**
  * Transmit APRS log packet
  */
-void transmit_log(void)
+void transmit_log(track_t *trackPoint)
 {
 	// Encode telemetry header
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
@@ -323,8 +279,8 @@ void transmit_log(void)
 	for(i=0; i<LOG_TRX_NUM; i++) {
 		track_t *data = getNextLogPoint();
 		uint8_t base64[BASE64LEN(sizeof(track_t))+1];
-		base64_encode(data, base64, sizeof(track_t));
-		ax25_send_string(base64);
+		base64_encode((uint8_t*)data, base64, sizeof(track_t));
+		ax25_send_string((char*)base64);
 	}
 
 	// Send footer

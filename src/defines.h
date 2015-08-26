@@ -16,19 +16,20 @@
 // Configuration defines
 #define TARGET_PECAN_FEMTO2_1	1
 #define TARGET_PECAN_PICO6		2
+#define TARGET_PECAN_FEMTO3_EXPERIMENTAL 3
 
-#define REF_VCC1V8_LDO			3
-#define REF_VCC					4
+#define REF_VCC1V8_LDO			4
+#define REF_VCC					5
 
-#define BUS_UART				5
-#define BUS_I2C					6
+#define BUS_UART				6
+#define BUS_I2C					7
 
-#define PRIMARY					7
-#define SECONDARY				8
+#define PRIMARY					8
+#define SECONDARY				9
 
-#define _20MHZ					9
-#define _26MHZ					10
-#define _27MHZ					11
+#define _20MHZ					10
+#define _26MHZ					11
+#define _27MHZ					12
 
 #define AD0						0
 #define AD1						1

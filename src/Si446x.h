@@ -24,5 +24,6 @@ void stopTx(void);
 void radioShutdown(void);
 void radioTune(uint32_t frequency, uint8_t level);
 inline void setGPIO(bool s);
+int8_t Si406x_getTemperature(void);
 
 #endif

@@ -71,10 +71,14 @@ int main(void)
 	terminal_flush();
 	delay(1000);
 
-	trackingstate_t trackingstate = TRANSMIT;
+	trackingstate_t trackingstate = LOG;
 	gpsstate_t gpsstate = GPS_LOSS;
+
+	track_t trackPoint;
+
 	uint64_t timestampPointer = 0;
 	uint64_t lastLogPoint = 0;
+	uint32_t id = 0;
 
 	while(true) {
 
@@ -159,34 +163,37 @@ int main(void)
 				break;
 
 			case LOG:
-				if(getUnixTimestamp()-lastLogPoint >= LOG_CYCLE_TIME*1000) { // New log point necessary
-					track_t logPoint;
+				trackPoint.id = ++id;
+				trackPoint.time = getUnixTimestamp()/1000;
+				trackPoint.latitude = lastFix.latitude;
+				trackPoint.longitude = lastFix.longitude;
+				trackPoint.altitude = lastFix.altitude;
+				trackPoint.satellites = lastFix.satellites;
+				trackPoint.ttff = lastFix.ttff;
 
-					logPoint.time = date2UnixTimestamp(lastFix.time)/1000;
-					logPoint.latitude = lastFix.latitude;
-					logPoint.longitude = lastFix.longitude;
-					logPoint.altitude = lastFix.altitude;
-					logPoint.satellites = lastFix.satellites;
-					logPoint.ttff = lastFix.ttff;
+				ADC_Init();
+				trackPoint.vbat = VBAT_TO_EIGHTBIT(getBatteryMV());
+				#ifdef SOLAR_AVAIL
+				trackPoint.vsol = VSOL_TO_EIGHTBIT(getSolarMV());
+				#else
+				trackPoint.vsol = 0;
+				#endif
+				ADC_DeInit();
 
-					ADC_Init();
-					logPoint.vbat = getBattery8bit();
-					#ifdef SOLAR_AVAIL
-					logPoint.vsol = getSolar8bit();
-					#else
-					logPoint.vsol = 0;
-					#endif
-					ADC_DeInit();
+				#ifdef BMP180_AVAIL
+				BMP180_Init();
+				trackPoint.temp = (getTemperature() / 10);
+				trackPoint.pressure = getPressure();
+				BMP180_DeInit();
+				#else
+				Si406x_Init();
+				trackPoint.temp = Si406x_getTemperature();
+				radioShutdown();
+				#endif
 
-					#ifdef BMP180_AVAIL
-					BMP180_Init();
-					logPoint.temp = (getTemperature() / 10)+100;
-					logPoint.pressure = getPressure();
-					BMP180_DeInit();
-					#endif
+				if(getUnixTimestamp()-lastLogPoint >= LOG_CYCLE_TIME*1000) // New log point necessary
+					logTrackPoint(trackPoint);
 
-					logTrackPoint(logPoint);
-				}
 				trackingstate = TRANSMIT;
 				break;
 
@@ -195,19 +202,19 @@ int main(void)
 				timestampPointer = getUnixTimestamp();
 
 				// Transmit APRS telemetry
-				transmit_telemetry();
+				transmit_telemetry(&trackPoint);
 
 				// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
 				power_save(6000);
 
 				// Transmit APRS position
-				transmit_position(gpsstate);
+				transmit_position(&trackPoint, gpsstate, lastFix.course, lastFix.speed);
 
 				// Wait a few seconds (Else aprs.fi reports "[Rate limited (< 5 sec)]")
 				power_save(6000);
 
 				// Transmit log packet
-				transmit_log();
+				transmit_log(&trackPoint);
 
 				// Change state depending on GPS status
 				if(gpsstate == GPS_LOCK || gpsstate == GPS_LOW_BATT) {

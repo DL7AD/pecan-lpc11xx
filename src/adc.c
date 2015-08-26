@@ -47,16 +47,6 @@ uint32_t getBatteryMV(void)
 	#endif
 }
 
-/**
- * Returns battery voltage in a 8bit value
- * 255 = 4080mV
- * @return 8bit battery voltage
- */
-uint32_t getBattery8bit(void)
-{
-	return getBatteryMV() >> 4;
-}
-
 #ifdef SOLAR_AVAIL
 
 /**
@@ -72,16 +62,6 @@ uint32_t getSolarMV(void)
 	#elif ADC_REF == REF_VCC
 	return getADC(ADC_AD_SOLAR) / REF_MV;
 	#endif
-}
-
-/**
- * Returns solar voltage in a 8bit value
- * 255 = 2040mV
- * @return 8bit solar voltage
- */
-uint32_t getSolar8bit(void)
-{
-	return getSolarMV() >> 3;
 }
 
 #endif

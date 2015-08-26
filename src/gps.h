@@ -34,20 +34,6 @@ typedef struct {
 	uint8_t ttff;
 } gps_t;
 
-typedef struct {
-	uint32_t time;
-	float latitude;
-	float longitude;
-	uint16_t altitude;
-	uint8_t satellites;
-	uint8_t ttff;
-	uint8_t vbat;
-	uint8_t vsol;
-	uint8_t temp;
-	// 1byte dummy
-	uint32_t pressure;
-} track_t;
-
 extern gps_t lastFix;
 
 void GPS_Init();
@@ -68,8 +54,5 @@ void gpsSetTime2lock(uint32_t ms);
 void gps_reset(void);
 void gps_hw_switch(bool pos);
 bool gpsIsOn(void);
-
-void logTrackPoint(track_t logPoint);
-track_t* getNextLogPoint(void);
 
 #endif

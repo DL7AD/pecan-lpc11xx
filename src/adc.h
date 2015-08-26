@@ -20,14 +20,18 @@
 
 #include "types.h"
 
+// Conversion voltages to compressed 8bit-formats (Unit: mV)
+#define VBAT_TO_EIGHTBIT(x) ((x)/10-180)
+#define VSOL_TO_EIGHTBIT(x) ((x)/10)
+#define EIGHTBIT_TO_VBAT(x) (10*(x)+1800)
+#define EIGHTBIT_TO_VSOL(x) ((x)*10)
+
 void ADC_Init(void);
 void ADC_DeInit(void);
 uint32_t getBatteryMV(void);
-uint32_t getBattery8bit(void);
 uint16_t getADC(uint8_t ad);
 
 #ifdef SOLAR_AVAIL
-uint32_t getSolar8bit(void);
 uint32_t getSolarMV(void);
 #endif
 

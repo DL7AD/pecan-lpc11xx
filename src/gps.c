@@ -134,12 +134,6 @@ const uint8_t UBX_SAVE_SETTINGS[] = {
 	0x58, 0x59							/* checksum */
 };
 
-
-static track_t track[LOG_SIZE];
-static uint8_t trackPointer = 0; // Logging pointer for logging
-static uint8_t trackPointerTRX = 0; // Logging pointer for transmission
-static uint8_t lastTrack = 0; // Last log point
-
 // Module declarations
 static void parse_sentence_type(const char * token);
 static void parse_time(const char *token);
@@ -668,21 +662,3 @@ void gps_hw_switch(bool pos) {
 bool gpsIsOn(void) {
 	return isOn;
 }
-
-void logTrackPoint(track_t logPoint) {
-	// Log point
-	track[trackPointer] = logPoint;
-
-	// Move tracker pointer one position foward
-	trackPointer = (trackPointer+1) % LOG_SIZE;
-	lastTrack = trackPointer;
-}
-
-track_t* getNextLogPoint(void) {
-	track_t *logPoint = &track[trackPointerTRX];
-	trackPointerTRX = (trackPointerTRX+1) % (!lastTrack ? 1 : lastTrack);
-	return logPoint;
-}
-
-
-

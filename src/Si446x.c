@@ -107,31 +107,28 @@ void SendCmdReceiveAnswerSetDelay(uint8_t* txData, uint32_t byteCountTx, uint8_t
 	// Warten auf beenden der Kommunikation
 	SSP_WaitTransferComplete();
 
-	delay(1);
-
 	// Warten auf Antwort
-//	delay(1);
-//	uint8_t rx_answer[] = {0x00, 0x00};
+	uint8_t rx_answer[] = {0x00, 0x00};
 
-//	while(rx_answer[0] != 0xFF) {
-//		uint8_t rx_ready[] = {0x44, 0x00};
-//
-//
-//		SSP_Info.pTxData = rx_ready;
-//		SSP_Info.pRxData = rx_answer;
-//		SSP_Info.TxCount = 2;
-//		SSP_Info.RxCount = 2;
-//
-//		// Kommunikation durchführen
-//		SSP_START_IRQ();
-//
-//		// Warten auf beenden der Kommunikation
-//		Si406x_WaitTransferComplete();
-//
-//		if(rx_answer[1] != 0xFF) {
-//			delay(1);
-//		}
-//	}
+	while(rx_answer[0] != 0xFF) {
+		uint8_t rx_ready[] = {0x44, 0x00};
+
+
+		SSPStruct.pTxData = rx_ready;
+		SSPStruct.pRxData = rx_answer;
+		SSPStruct.TxCount = 2;
+		SSPStruct.RxCount = 2;
+
+		// Kommunikation durchführen
+		SSP_START_IRQ();
+
+		// Warten auf beenden der Kommunikation
+		SSP_WaitTransferComplete();
+
+		if(rx_answer[1] != 0xFF) {
+			delay(1);
+		}
+	}
 
 
 	// Zusaetzliches delay
@@ -258,4 +255,46 @@ void radioTune(uint32_t frequency, uint8_t level) {
 
 inline void setGPIO(bool s) {
 	RF_SHIFT_SET(s);
+}
+
+int8_t Si406x_getTemperature(void) {
+	uint8_t txData[7] = {0x14, 0x10};
+	uint8_t rxData[7];
+
+	// Kommunikation vorbereiten
+	SSPStruct.pTxData = txData;
+	SSPStruct.pRxData = rxData;
+	SSPStruct.TxCount = 2;
+	SSPStruct.RxCount = 2;
+
+	// Kommunikation durchführen
+	SSP_START_IRQ();
+
+	// Warten auf beenden der Kommunikation
+	SSP_WaitTransferComplete();
+
+	delay(10);
+
+	uint8_t rx_answer[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	uint8_t rx_ready[] = {0x44, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	while(rx_answer[0] != 0xFF) {
+
+		SSPStruct.pTxData = rx_ready;
+		SSPStruct.pRxData = rx_answer;
+		SSPStruct.TxCount = 8;
+		SSPStruct.RxCount = 8;
+
+		// Kommunikation durchführen
+		SSP_START_IRQ();
+
+		// Warten auf beenden der Kommunikation
+		SSP_WaitTransferComplete();
+
+		if(rx_answer[1] != 0xFF) {
+			delay(1);
+		}
+	}
+
+	uint16_t adc = rx_answer[7] | ((rx_answer[6] & 0x7) << 8);
+	return (899*adc)/4096 - 293;
 }
