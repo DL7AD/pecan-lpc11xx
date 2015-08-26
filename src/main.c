@@ -191,8 +191,10 @@ int main(void)
 				radioShutdown();
 				#endif
 
-				if(getUnixTimestamp()-lastLogPoint >= LOG_CYCLE_TIME*1000) // New log point necessary
+				if(getUnixTimestamp()-lastLogPoint >= LOG_CYCLE_TIME*1000) { // New log point necessary
 					logTrackPoint(trackPoint);
+					lastLogPoint = getUnixTimestamp();
+				}
 
 				trackingstate = TRANSMIT;
 				break;
