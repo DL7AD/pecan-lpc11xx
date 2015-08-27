@@ -113,7 +113,7 @@ int main(void)
 				if(batt_voltage < VOLTAGE_NOGPS) { // Tracker has low battery, so switch off GPS
 					if(gpsIsOn())
 						GPS_PowerOff();
-					trackingstate = TRANSMIT;
+					trackingstate = LOG;
 					gpsstate = GPS_LOW_BATT;
 					continue;
 				}
@@ -130,7 +130,7 @@ int main(void)
 				// Decide to switch off GPS due to low battery
 				if(batt_voltage < VOLTAGE_NOGPS-VOLTAGE_GPS_MAXDROP) { //Battery voltage dropped below specific value while acquisitioning
 					GPS_PowerOff(); // Stop consuming power
-					trackingstate = TRANSMIT;
+					trackingstate = LOG;
 					gpsstate = GPS_LOW_BATT;
 				}
 
@@ -155,7 +155,7 @@ int main(void)
 
 				if(getUnixTimestamp()-timestampPointer >= TIME_MAX_GPS_SEARCH*1000) { // Searching for GPS took too long
 					gpsSetTime2lock(TIME_MAX_GPS_SEARCH);
-					trackingstate = TRANSMIT;
+					trackingstate = LOG;
 					gpsstate = GPS_LOSS;
 					continue;
 				}
@@ -228,7 +228,7 @@ int main(void)
 				break;
 
 			default: // It should actually never reach this state
-				trackingstate = TRANSMIT;
+				trackingstate = LOG;
 				break;
 		}
 	}
