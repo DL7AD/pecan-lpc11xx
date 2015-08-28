@@ -27,8 +27,8 @@
 #define TARGET				TARGET_PECAN_FEMTO3_EXPERIMENTAL
 
 // APRS Source Callsign
-#define S_CALLSIGN			"DL4MDW"
-#define S_CALLSIGN_ID		12
+#define S_CALLSIGN			"DL7AD"
+#define S_CALLSIGN_ID		13
 
 // APRS Symbol
 #define APRS_SYMBOL_TABLE	'/'
