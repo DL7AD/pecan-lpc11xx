@@ -335,7 +335,8 @@ void parse_course(const char *token)
 
 void parse_altitude(const char *token)
 {
-	newFix.altitude = atoi(token);
+	int32_t alt = atoi(token);
+	newFix.altitude = alt > 0 ? alt : 0;
 }
 
 
