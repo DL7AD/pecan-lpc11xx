@@ -119,8 +119,7 @@ int main(void)
 				}
 
 				// Switch on GPS if switched off
-				if(!gpsIsOn())
-					GPS_Init();
+				GPS_Init();
 
 				timestampPointer = getUnixTimestamp(); // Mark timestamp for search_gps routine
 				trackingstate = SEARCH_GPS;
