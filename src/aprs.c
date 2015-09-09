@@ -141,7 +141,7 @@ void transmit_telemetry(track_t *trackPoint)
 void transmit_position(track_t *trackPoint, gpsstate_t gpsstate, uint16_t course, uint16_t speed)
 {
 	char temp[22];
-	date_t date = unixTimestamp2Date(trackPoint->time);
+	date_t date = unixTimestamp2Date(trackPoint->time * 1000);
 
 	ax25_send_header(addresses, sizeof(addresses)/sizeof(s_address_t));
 	ax25_send_byte('/');                // Report w/ timestamp, no APRS messaging. $ = NMEA raw data
