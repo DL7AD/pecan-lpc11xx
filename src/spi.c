@@ -89,7 +89,7 @@ void SSP_Init(void) {
 			LPC_IOCON->PIO2_2			= 0x32;					// PIO2_2 as MISO SSP, Pull-Up, Hysterese ON
 		} else { // PIO1_10
 			LPC_IOCON->MISO1_LOC		= 0x1;					// Selects MISO1 location (0x1 for PIO1_10)
-			LPC_IOCON->PIO1_10			= 0x33;					// PIO1_10 as MISO SSP, Pull-Up, Hysterese ON
+			LPC_IOCON->PIO1_10			= 0xB3;					// PIO1_10 as MISO SSP, Pull-Up, Hysterese ON
 		}
 
 		if(&LPC_IOCON->SSP_PIO_SCK == &LPC_IOCON->PIO2_1) {
