@@ -24,15 +24,15 @@
 // Type of Pecan
 //							TARGET_PECAN_PICO6    for Pecan Pico 6
 //							TARGET_PECAN_FEMTO2_1 for Pecan Femto 2.1
-#define TARGET				TARGET_PECAN_FEMTO3_EXPERIMENTAL
+#define TARGET				TARGET_PECAN_FEMTO2_1
 
 // APRS Source Callsign
 #define S_CALLSIGN			"DL7AD"
-#define S_CALLSIGN_ID		13
+#define S_CALLSIGN_ID		5
 
 // APRS Symbol
 #define APRS_SYMBOL_TABLE	'/'
-#define APRS_SYMBOL_ID		'O'
+#define APRS_SYMBOL_ID		'/'
 
 // APRS Digipeating paths (comment this out, if not used)
 #define DIGI_PATH1			"WIDE1"
@@ -47,17 +47,17 @@
 #define TX_DELAY			60
 
 
-#define TIME_SLEEP_CYCLE	300
+#define TIME_SLEEP_CYCLE	60
 #define TIME_MAX_GPS_SEARCH	120
 
 // Radio power:				Radio power (for Si4464)
 //							Range 1-127, Radio output power depends on VCC voltage.
 //							127 @ VCC=3400mV ~ 100mW
 //							20  @ VCC=3400mV ~ 10mW
-#define RADIO_POWER			50
+#define RADIO_POWER			127
 
 // Logging size:
-#define LOG_SIZE			84
+#define LOG_SIZE			0
 #define LOG_CYCLE_TIME		7200
 #define LOG_TRX_NUM			6		// Log messages that are transmitted in one packet
 
@@ -73,7 +73,7 @@
 // 1. Use GPS power save:	GPS will be switched on permanently and sent into power save mode when GPS has
 //							lock (when >4Sats). GPS and UART interface will be reset and reinitialized when GPS
 //							does not lock for 3 cycles. To use this mode, USE_GPS_POWER_SAVE has to be set.
-//#define USE_GPS_POWER_SAVE
+//#define
 
 // Battery type: Pecan Pico has two options of battery types
 // 1. PRIMARY				LiFeSe2 Power save modes disabled, battery will be used until completely empty
@@ -129,8 +129,8 @@
 	#define ADC_PIO_BATT		R_PIO1_2
 	#define ADC_AD_BATT			AD3
 
-	#define UART_PIO_RXD		PIO3_5
-	#define UART_PIO_TXD		PIO3_4
+	#define UART_PIO_RXD		PIO3_4
+	#define UART_PIO_TXD		PIO3_5
 
 	#define GPS_GPIO_RESET		LPC_GPIO0
 	#define GPS_PIO_RESET		PIO0_7
