@@ -22,8 +22,8 @@ Known bugs
 
 Todo:
   * Watchdog
-  * Backlog transmission
   * Accurate geofencing for frequency switching
+  * ~~Backlog transmission~~ Done
   * ~~Evaluation whether ublox MAX8 works at >12,000m altitude or not~~ Has been checked with GPS Simulator, bug fixed
   * ~~Evaluation whether APRS frequencies changes at different location~~ works perfectly
   * ~~GPS jump filter~~ Discarded, no major problem
