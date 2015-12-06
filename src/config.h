@@ -73,7 +73,7 @@
 // 1. Use GPS power save:	GPS will be switched on permanently and sent into power save mode when GPS has
 //							lock (when >4Sats). GPS and UART interface will be reset and reinitialized when GPS
 //							does not lock for 3 cycles. To use this mode, USE_GPS_POWER_SAVE has to be set.
-//#define
+//#define					USE_GPS_POWER_SAVE
 
 // Battery type: Pecan Pico has two options of battery types
 // 1. PRIMARY				LiFeSe2 Power save modes disabled, battery will be used until completely empty
@@ -97,20 +97,13 @@
 // Use GPS power save:		GPS will be switched on permanently and sent into power save mode when GPS has
 //							lock (when >4Sats). GPS and UART interface will be reset and reinitialized when GPS
 //							does not lock for 3 cycles.
+#define						USE_GPS_POWER_SAVE
 
 // Battery Type:			Pecan Femto can be only powered by a primary battery (it has no solar charger)
+#define BATTERY_TYPE		PRIMARY
 
 // Oscillator frequency:	Pecan Femto has a stable oscillator
 #define OSC_FREQ			26000000
-
-#endif
-
-/* =============================================== Target definitions ============================================== */
-/* ============================= Pecan Femto 3 specific (Special experimental target) ============================== */
-#if TARGET == TARGET_PECAN_FEMTO3_EXPERIMENTAL
-
-#define OSC_FREQ			20000000
-#define BATTERY_TYPE		PRIMARY
 
 #endif
 
@@ -169,93 +162,6 @@
 	#define BMP180_AVAIL						// Pressure sensor BMP180 is available
 	#define I2C_PULLUPS_AVAIL					// Controlable I2C Pullups available
 	#define VCXO_POWERED_BY_LDO					// VCXO powered by LDO (VCC1V8)
-	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
-	#define GPS_BAUDRATE		9600			// Baudrate for ublox MAX7 or MAX8
-	#define USE_GPS_HW_SW						// Use Hardware switch for GPS power
-
-	#define ADC_REF				REF_VCC1V8_LDO	// ADC reference is 1.8V LDO
-
-	#define ADC_GPIO_REF		LPC_GPIO1
-	#define ADC_PIO_REF			R_PIO1_1
-	#define ADC_PIN_REF			(1 << 1)
-
-	#define ADC_AD_REF			AD2
-	#define ADC_PIO_SOLAR		R_PIO1_0
-	#define ADC_AD_SOLAR		AD1
-
-	#define LDO_GPIO_EN			LPC_GPIO1
-	#define LDO_PIO_EN			R_PIO1_2
-	#define LDO_PIN_EN			(1 << 2)
-
-	#define I2C_GPIO_PULL_VCC	LPC_GPIO1
-	#define I2C_PIO_PULL_VCC	PIO1_9
-	#define I2C_PIN_PULL_VCC	(1 << 9)
-
-	#define UART_PIO_RXD		PIO1_6
-	#define UART_PIO_TXD		PIO1_7
-
-	#define GPS_GPIO_RESET		LPC_GPIO2
-	#define GPS_PIO_RESET		PIO2_0
-	#define GPS_PIN_RESET		(1 << 0)
-
-	#define SSP_PORT			LPC_SSP0
-	#define SSP_IRQn			SSP0_IRQn
-	#define SSP_PIO_MOSI		PIO0_9
-	#define SSP_PIO_MISO		PIO0_8
-	#define SSP_PIO_SCK			PIO0_6
-
-	#define SSP_GPIO_RADIO_SS	LPC_GPIO0
-	#define SSP_PIO_RADIO_SS	PIO0_7
-	#define SSP_PIN_RADIO_SS	(1 << 7)
-
-	#define RADIO_GPIO_SDN		LPC_GPIO1
-	#define RADIO_PIO_SDN		PIO1_10
-	#define RADIO_PIN_SDN		(1 << 10)
-
-	#define VCXO_GPIO_EN		LPC_GPIO0
-	#define VCXO_PIO_EN			PIO0_3
-	#define VCXO_PIN_EN			(1 << 3)
-
-	#define VCXO_PIO_CTRL		R_PIO0_11
-	#define VCXO_MR_CTRL		MR3
-	#define VCXO_VAL			0x3
-
-	#define RADIO_GPIO_GPIO0	LPC_GPIO3
-	#define RADIO_PIO_GPIO0		PIO3_4
-	#define RADIO_PIN_GPIO0		(1 << 4)
-
-	#define RADIO_GPIO_GPIO1	LPC_GPIO3
-	#define RADIO_PIO_GPIO1		PIO3_5
-	#define RADIO_PIN_GPIO1		(1 << 5)
-
-	#define EXT_GPIO_OUT1		LPC_GPIO1
-	#define EXT_PIO_OUT1		PIO1_4
-	#define EXT_PIN_OUT1		(1 << 4)
-
-	#define EXT_GPIO_OUT2		LPC_GPIO1
-	#define EXT_PIO_OUT2		PIO1_11
-	#define EXT_PIN_OUT2		(1 << 11)
-
-	#define EXT_GPIO_OUT3		LPC_GPIO3
-	#define EXT_PIO_OUT3		PIO3_2
-	#define EXT_PIN_OUT3		(1 << 2)
-
-	#define EXT_GPIO_OUT4		LPC_GPIO1
-	#define EXT_PIO_OUT4		PIO1_5
-	#define EXT_PIN_OUT4		(1 << 5)
-
-	#define I2C_GPIO_PULL_VCC	LPC_GPIO1
-	#define I2C_PIO_PULL_VCC	PIO1_9
-	#define I2C_PIN_PULL_VCC	(1 << 9)
-
-	#define GPS_GPIO_EN			LPC_GPIO1
-	#define GPS_PIO_EN			PIO1_8
-	#define GPS_PIN_EN			(1 << 8)
-
-#elif TARGET == TARGET_PECAN_FEMTO3_EXPERIMENTAL
-
-	#define EXT_PIN_AVAIL						// External pins available
-	#define SOLAR_AVAIL							// Solar feed available
 	#define GPS_BUS				BUS_UART		// Use UART bus for GPS communication
 	#define GPS_BAUDRATE		9600			// Baudrate for ublox MAX7 or MAX8
 	#define USE_GPS_HW_SW						// Use Hardware switch for GPS power

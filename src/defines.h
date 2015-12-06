@@ -16,7 +16,6 @@
 // Configuration defines
 #define TARGET_PECAN_FEMTO2_1	1
 #define TARGET_PECAN_PICO6		2
-#define TARGET_PECAN_FEMTO3_EXPERIMENTAL 3
 
 #define REF_VCC1V8_LDO			4
 #define REF_VCC					5
