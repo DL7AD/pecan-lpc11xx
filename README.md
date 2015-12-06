@@ -6,7 +6,7 @@ This is the APRS tracking software made for Pecan Pico 6 and Pecan Femto 2.1. It
 - GPS-Satellites being used
 - GPS-Altitude
 - Airpressure (if tracker has BMP180)
-- Temperature (if tracker has BMP180)
+- Temperature
 - Battery voltage
 - Solar voltage (if tracker is solar-equipped)
 - Static comment
