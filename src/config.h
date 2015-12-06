@@ -24,15 +24,15 @@
 // Type of Pecan
 //							TARGET_PECAN_PICO6    for Pecan Pico 6
 //							TARGET_PECAN_FEMTO2_1 for Pecan Femto 2.1
-#define TARGET				TARGET_PECAN_FEMTO2_1
+#define TARGET				TARGET_PECAN_PICO6
 
 // APRS Source Callsign
-#define S_CALLSIGN			"DL7AD"
-#define S_CALLSIGN_ID		5
+#define S_CALLSIGN			"DL4MDW"
+#define S_CALLSIGN_ID		12
 
 // APRS Symbol
 #define APRS_SYMBOL_TABLE	'/'
-#define APRS_SYMBOL_ID		'/'
+#define APRS_SYMBOL_ID		'O'
 
 // APRS Digipeating paths (comment this out, if not used)
 #define DIGI_PATH1			"WIDE1"
@@ -47,7 +47,7 @@
 #define TX_DELAY			60
 
 
-#define TIME_SLEEP_CYCLE	60
+#define TIME_SLEEP_CYCLE	180
 #define TIME_MAX_GPS_SEARCH	120
 
 // Radio power:				Radio power (for Si4464)
@@ -57,7 +57,7 @@
 #define RADIO_POWER			127
 
 // Logging size:
-#define LOG_SIZE			0
+#define LOG_SIZE			84
 #define LOG_CYCLE_TIME		7200
 #define LOG_TRX_NUM			6		// Log messages that are transmitted in one packet
 
@@ -84,8 +84,8 @@
 // Oscillator frequency:	The oscillator is powered by different VCC levels and different PWM levels. So it has to
 //							be adjusted/stabilized by software depending on voltage. At the moment there are two
 //							different oscillators being used by Thomas (DL4MDW) and Sven (DL7AD)
-#define OSC_FREQ			19997700
-//#define OSC_FREQ			26992900
+//#define OSC_FREQ			19997700
+#define OSC_FREQ			26992900
 
 #endif
 

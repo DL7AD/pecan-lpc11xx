@@ -21,10 +21,10 @@
 #include "types.h"
 
 // Conversion voltages to compressed 8bit-formats (Unit: mV)
-#define VBAT_TO_EIGHTBIT(x) ((x)/10)
+#define VBAT_TO_EIGHTBIT(x) (((x)-2000)/10)
 #define VSOL_TO_EIGHTBIT(x) ((x)/10)
-#define EIGHTBIT_TO_VBAT(x) (10*(x))
-#define EIGHTBIT_TO_VSOL(x) ((x)*10)
+#define EIGHTBIT_TO_VBAT(x) (10*(x)+2000)
+#define EIGHTBIT_TO_VSOL(x) (10*(x))
 
 void ADC_Init(void);
 void ADC_DeInit(void);
